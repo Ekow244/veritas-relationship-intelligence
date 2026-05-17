@@ -18,6 +18,8 @@ import {
   trustBadges,
 } from "@/lib/content";
 
+const assetBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
+
 export default function Home() {
   return (
     <main className="overflow-hidden bg-[#0d0f0d]">
@@ -28,7 +30,7 @@ export default function Home() {
         className="relative isolate min-h-[78svh] overflow-hidden border-b border-white/10"
       >
         <Image
-          src="/images/veritas-hero.png"
+          src={`${assetBasePath}/images/veritas-hero.png`}
           alt=""
           fill
           priority

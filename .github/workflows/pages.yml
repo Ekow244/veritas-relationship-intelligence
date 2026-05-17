@@ -38,6 +38,7 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: "true"
+          NEXT_PUBLIC_BASE_PATH: /veritas-relationship-intelligence
           NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/veritas-relationship-intelligence
           NEXT_PUBLIC_INTAKE_EMAIL: ${{ vars.NEXT_PUBLIC_INTAKE_EMAIL }}
 

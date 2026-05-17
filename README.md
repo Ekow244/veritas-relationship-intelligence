@@ -46,6 +46,8 @@ https://<github-username>.github.io/veritas-relationship-intelligence/
 
 It also sets `NEXT_PUBLIC_SITE_URL` for social preview metadata.
 
+For local development, leave `NEXT_PUBLIC_BASE_PATH` empty. The GitHub Pages workflow sets it to `/veritas-relationship-intelligence`.
+
 ## Intake Form
 
 The intake form currently uses a `mailto:` action as a placeholder. By default, it targets `intake@veritasri.example`, which is not a real inbox. To change the recipient at build time, set:
