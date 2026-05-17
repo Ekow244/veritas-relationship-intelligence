@@ -54,6 +54,8 @@ The intake form currently uses a `mailto:` action as a placeholder. By default, 
 NEXT_PUBLIC_INTAKE_EMAIL=you@example.com
 ```
 
+For GitHub Pages, add a repository variable named `NEXT_PUBLIC_INTAKE_EMAIL` in **Settings > Secrets and variables > Actions > Variables**.
+
 Each field has a stable `name` attribute so it can later be connected to:
 
 - Tally or Typeform for hosted intake workflows

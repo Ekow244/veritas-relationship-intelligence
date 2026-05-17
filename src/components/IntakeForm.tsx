@@ -11,7 +11,8 @@ const concernOptions = [
 
 export function IntakeForm() {
   const intakeEmail =
-    process.env.NEXT_PUBLIC_INTAKE_EMAIL ?? "intake@veritasri.example";
+    process.env.NEXT_PUBLIC_INTAKE_EMAIL?.trim() ||
+    "intake@veritasri.example";
 
   return (
     <form
