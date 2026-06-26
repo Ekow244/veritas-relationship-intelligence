@@ -75,6 +75,20 @@ Each field has a stable `name` attribute so it can later be connected to:
 - Secure document upload and retention controls
 - Transactional email for intake confirmations and report delivery
 
+## WhatsApp Bot MVP
+
+This repo now includes a separate WhatsApp bot service under `bot/`. GitHub Pages can host the static marketing site, but the bot must be deployed to a live backend host because WhatsApp needs webhook endpoints.
+
+Useful commands:
+
+```bash
+npm run bot:build
+npm run bot:test
+npm run bot:start
+```
+
+See `bot/README.md` for Meta WhatsApp Cloud API, Twilio sandbox, deployment, and MVP wiring instructions.
+
 ## Project Structure
 
 ```text
