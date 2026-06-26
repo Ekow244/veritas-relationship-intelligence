@@ -1,6 +1,7 @@
 import type { BotConfig } from "./config.js";
 import { analyzeSession } from "./analyzer.js";
 import { classifyMessage } from "./classifier.js";
+import { detectHeuristicSignals } from "./taxonomy.js";
 import {
   analyzingMessage,
   askForMoreMessage,
@@ -71,7 +72,12 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     return [imageNeedsVisionMessage()];
   }
 
-  const textSignalsReady = updated.inputs.some((item) => item.kind === "chat_text" && item.text && item.text.length > 80);
+  const combinedText = updated.inputs
+    .filter((item) => item.text)
+    .map((item) => item.text)
+    .join(" ");
+  const hasHeuristicSignals = detectHeuristicSignals(combinedText).signals.length > 0;
+  const textSignalsReady = combinedText.length > 80 || hasHeuristicSignals;
   const imageReady = updated.inputs.some((item) => item.image?.dataUrl);
 
   if (!textSignalsReady && !imageReady) {
