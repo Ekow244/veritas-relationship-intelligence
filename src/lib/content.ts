@@ -203,3 +203,16 @@ export const ethicsCards: IconContent[] = [
     icon: Landmark,
   },
 ];
+
+// WhatsApp click-to-chat. Twilio sandbox: prefillText is the join phrase so new
+// testers auto-join when they hit send. To go production: set `number` to your
+// production WhatsApp number and change `prefillText` to a greeting like
+// "Hi, I'd like to check someone".
+export const whatsapp = {
+  number: "14155238886",
+  prefillText: "join behind-across",
+};
+
+export function whatsappHref(): string {
+  return `https://wa.me/${whatsapp.number}?text=${encodeURIComponent(whatsapp.prefillText)}`;
+}
