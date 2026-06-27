@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veritas — Relationship Intelligence</title>
+<meta name="description" content="Ethical identity verification for people unsure whether someone they met online is real. A free instant WhatsApp check and confidential human reports. Built for clarity, not paranoia." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0A0A0B; --surface:#141416; --surface-2:#1B1B1E;
+    --hairline:rgba(255,255,255,0.08);
+    --text:#F5F2EC; --text-muted:#9C978D;
+    --amber:#E0A458; --amber-bright:#F2C079; --ember:#B5742F;
+    --risk-green:#4ADE80; --risk-amber:#FBBF24; --risk-red:#F87171;
+    --container:1120px; --gutter:24px;
+    --radius-card:16px; --radius-input:10px;
+    --shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 50px -30px rgba(0,0,0,0.8);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--text-muted);
+    font-family:"Inter",system-ui,-apple-system,sans-serif;
+    font-size:1.0625rem; line-height:1.6; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit; text-decoration:none;}
+  img,video{display:block; max-width:100%;}
+  ::selection{background:rgba(224,164,88,0.28); color:#fff8eb;}
+
+  .container{max-width:var(--container); margin:0 auto; padding:0 var(--gutter);}
+  section{padding:clamp(80px,12vh,140px) 0;}
+
+  h1,h2,h3{color:var(--text); font-weight:600; letter-spacing:-0.03em; line-height:1.07; margin:0; overflow-wrap:break-word;}
+  h1{font-size:clamp(2.5rem,6vw,4.5rem);}
+  h2{font-size:clamp(1.9rem,4vw,3rem);}
+  h3{font-size:1.15rem; letter-spacing:-0.02em;}
+  p{margin:0;}
+  .lead{color:var(--text); font-size:1.125rem;}
+  .eyebrow{
+    font-weight:500; font-size:0.75rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--amber); margin:0 0 18px;
+  }
+  .serif{font-family:"Instrument Serif",Georgia,serif; font-style:italic; letter-spacing:0; font-weight:400;}
+  .muted{color:var(--text-muted);}
+  .section-head{max-width:640px;}
+  .section-head.center{margin:0 auto; text-align:center;}
+  .section-head p{margin-top:18px;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; gap:9px; justify-content:center;
+    border-radius:999px; padding:14px 26px; font-weight:600; font-size:0.9375rem;
+    font-family:inherit; cursor:pointer; border:1px solid transparent;
+    transition:transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
+    white-space:nowrap;
+  }
+  .btn svg{width:17px; height:17px;}
+  .btn-primary{background:var(--amber); color:#0A0A0B; border-color:var(--amber);}
+  .btn-primary:hover{background:var(--amber-bright); border-color:var(--amber-bright); transform:translateY(-1px); box-shadow:0 14px 40px -12px rgba(224,164,88,0.55);}
+  .btn-secondary{background:transparent; color:var(--text); border-color:var(--hairline);}
+  .btn-secondary:hover{border-color:rgba(255,255,255,0.22); background:rgba(255,255,255,0.04); transform:translateY(-1px);}
+  .btn-block{width:100%;}
+
+  :focus-visible{outline:2px solid var(--amber); outline-offset:3px; border-radius:6px;}
+
+  /* ---------- nav ---------- */
+  header.nav{
+    position:sticky; top:0; z-index:60;
+    background:rgba(10,10,11,0.55); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border-bottom:1px solid var(--hairline);
+    transition:padding .25s ease, background .25s ease;
+  }
+  header.nav.scrolled{background:rgba(10,10,11,0.82);}
+  .nav-inner{display:flex; align-items:center; justify-content:space-between; padding:18px var(--gutter); max-width:var(--container); margin:0 auto; transition:padding .25s ease;}
+  header.nav.scrolled .nav-inner{padding-top:12px; padding-bottom:12px;}
+  .wordmark{display:flex; align-items:baseline; gap:9px; font-weight:600; color:var(--text); letter-spacing:-0.01em;}
+  .wordmark .sub{color:var(--text-muted); font-weight:400; font-size:0.8rem; letter-spacing:0.02em;}
+  .nav-links{display:flex; align-items:center; gap:30px;}
+  .nav-links a{color:var(--text-muted); font-size:0.9rem; font-weight:500; transition:color .18s ease;}
+  .nav-links a:hover{color:var(--text);}
+  .nav-right{display:flex; align-items:center; gap:14px;}
+  .nav-toggle{display:none; background:none; border:1px solid var(--hairline); border-radius:10px; padding:9px 11px; cursor:pointer;}
+  .nav-toggle span{display:block; width:18px; height:1.5px; background:var(--text); margin:4px 0; transition:.2s;}
+  .mobile-menu{display:none; border-bottom:1px solid var(--hairline); background:rgba(10,10,11,0.97); backdrop-filter:blur(18px);}
+  .mobile-menu.open{display:block;}
+  .mobile-menu a{display:block; padding:14px var(--gutter); color:var(--text-muted); border-top:1px solid var(--hairline); font-weight:500;}
+  .mobile-menu a:hover{color:var(--text); background:rgba(255,255,255,0.03);}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; padding-top:80px; padding-bottom:80px;}
+  .hero-layer{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+  /* SWAP HOOK: .hero-video is a real looping clip. To change footage, replace
+     site/videos/hero-hd.mp4 (keep poster images/veritas-hero.png). The <canvas>
+     warm-glow overlay and gradients below sit on top and also serve as the
+     reduced-motion / no-video fallback. */
+  .hero-video{object-fit:cover; opacity:0.42;}
+  #hero-canvas{opacity:0.9; mix-blend-mode:screen;}
+  .hero-grain{
+    opacity:0.04; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .hero-vignette{background:radial-gradient(120% 80% at 50% 35%, transparent 40%, rgba(10,10,11,0.55) 78%, var(--bg) 100%), linear-gradient(180deg, rgba(10,10,11,0.2) 0%, rgba(10,10,11,0.65) 100%);}
+  .hero-static-glow{display:none; background:radial-gradient(60% 50% at 30% 30%, rgba(224,164,88,0.16), transparent 70%), radial-gradient(50% 45% at 80% 60%, rgba(181,116,47,0.14), transparent 70%);}
+  .hero-content{position:relative; z-index:2; max-width:780px;}
+  .hero h1{margin-top:8px;}
+  .hero .lead{margin-top:24px; max-width:600px;}
+  .hero-cta{display:flex; flex-wrap:wrap; gap:14px; margin-top:34px;}
+  .trust-row{display:flex; flex-wrap:wrap; gap:18px 26px; margin-top:34px; font-size:0.85rem; color:var(--text-muted);}
+  .trust-row span{display:inline-flex; align-items:center; gap:8px;}
+  .trust-row svg{width:15px; height:15px; color:var(--amber); flex-shrink:0;}
+  .risk-chip{display:inline-flex; align-items:center; gap:16px; margin-top:30px; padding:11px 18px; border:1px solid var(--hairline); border-radius:999px; background:rgba(20,20,22,0.5); font-size:0.82rem; color:var(--text-muted);}
+  .risk-chip .dot{display:inline-flex; align-items:center; gap:7px;}
+  .risk-chip i{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .scroll-cue{position:absolute; bottom:26px; left:50%; transform:translateX(-50%); z-index:2; color:var(--text-muted); font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; display:flex; flex-direction:column; align-items:center; gap:8px; opacity:0.7;}
+  .scroll-cue .line{width:1px; height:34px; background:linear-gradient(var(--amber),transparent); animation:cue 2.2s ease-in-out infinite;}
+  @keyframes cue{0%,100%{opacity:.3; transform:scaleY(.6);}50%{opacity:1; transform:scaleY(1);}}
+
+  /* ---------- process ---------- */
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:56px;}
+  .step{background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:30px; box-shadow:var(--shadow);}
+  .step .num{font-size:0.85rem; font-weight:600; color:var(--amber); letter-spacing:0.06em;}
+  .step h3{margin-top:18px;}
+  .step p{margin-top:12px; font-size:0.95rem;}
+  .center-cta{display:flex; justify-content:center; margin-top:44px;}
+
+  /* ---------- two paths ---------- */
+  .paths{display:grid; grid-template-columns:repeat(2,1fr); gap:20px; margin-top:56px;}
+  .path{display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:34px; box-shadow:var(--shadow);}
+  .path.elevated{border-color:rgba(224,164,88,0.32); background:linear-gradient(180deg, rgba(224,164,88,0.05), var(--surface));}
+  .path .price{font-size:1.9rem; color:var(--text); font-weight:600; letter-spacing:-0.02em; margin-top:6px;}
+  .path .price.free{color:var(--amber-bright);}
+  .path ul{list-style:none; padding:0; margin:24px 0 0; display:grid; gap:13px; flex:1;}
+  .path li{display:flex; gap:11px; font-size:0.95rem; align-items:flex-start;}
+  .path li svg{width:16px; height:16px; color:var(--amber); flex-shrink:0; margin-top:3px;}
+  .path .btn{margin-top:28px;}
+
+  /* ---------- problem (editorial) ---------- */
+  .problem{position:relative; overflow:hidden;}
+  .problem .cta-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.16; z-index:0;}
+  .problem .veil{position:absolute; inset:0; background:linear-gradient(180deg, var(--bg) 0%, rgba(10,10,11,0.7) 50%, var(--bg) 100%); z-index:1;}
+  .problem .container{position:relative; z-index:2;}
+  .problem .serif{display:block; color:var(--amber-bright); font-size:clamp(1.6rem,3vw,2.2rem); margin-bottom:22px;}
+  .problem h2{max-width:760px;}
+  .problem .body{max-width:680px; margin-top:26px; font-size:1.0625rem;}
+
+  /* ---------- services ---------- */
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:56px;}
+  .card{background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:28px; box-shadow:var(--shadow); transition:transform .2s ease, border-color .2s ease, background .2s ease;}
+  .card:hover{transform:translateY(-4px); border-color:rgba(255,255,255,0.16); background:var(--surface-2);}
+  .card .ic{width:40px; height:40px; border-radius:11px; display:grid; place-items:center; border:1px solid rgba(224,164,88,0.22); background:rgba(224,164,88,0.08); color:var(--amber); margin-bottom:20px;}
+  .card .ic svg{width:19px; height:19px;}
+  .card h3{margin-bottom:11px;}
+  .card p{font-size:0.93rem;}
+
+  /* ---------- ethics ---------- */
+  .ethics-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:52px;}
+  .pillar{border:1px solid var(--hairline); border-radius:var(--radius-card); padding:28px; background:var(--surface);}
+  .pillar h3{margin-bottom:10px;}
+  .pillar p{font-size:0.93rem;}
+  .fineprint{margin-top:32px; font-size:0.82rem; color:var(--text-muted); max-width:720px; opacity:0.8;}
+
+  /* ---------- pricing ---------- */
+  .tiers{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:56px; align-items:start;}
+  .tier{position:relative; background:var(--surface); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:32px; box-shadow:var(--shadow); display:flex; flex-direction:column;}
+  .tier.featured{border-color:rgba(224,164,88,0.4); transform:translateY(-8px);}
+  .tier .tag{position:absolute; top:-12px; left:32px; background:var(--amber); color:#0A0A0B; font-size:0.7rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; padding:5px 12px; border-radius:999px;}
+  .tier h3{font-size:1.3rem;}
+  .tier .price{font-size:2.4rem; color:var(--text); font-weight:600; letter-spacing:-0.03em; margin:14px 0 4px;}
+  .tier .desc{font-size:0.92rem; min-height:46px;}
+  .tier ul{list-style:none; padding:0; margin:22px 0; display:grid; gap:12px; flex:1;}
+  .tier li{display:flex; gap:11px; font-size:0.92rem; align-items:flex-start;}
+  .tier li svg{width:16px; height:16px; color:var(--amber); flex-shrink:0; margin-top:3px;}
+
+  /* ---------- faq ---------- */
+  .faq-wrap{max-width:760px; margin:48px auto 0; border:1px solid var(--hairline); border-radius:var(--radius-card); overflow:hidden; background:var(--surface);}
+  .faq-item{border-top:1px solid var(--hairline);}
+  .faq-item:first-child{border-top:none;}
+  .faq-q{width:100%; background:none; border:none; color:var(--text); font-family:inherit; font-size:1.02rem; font-weight:500; text-align:left; padding:22px 26px; display:flex; justify-content:space-between; align-items:center; gap:18px; cursor:pointer;}
+  .faq-q .pm{flex-shrink:0; width:26px; height:26px; border:1px solid var(--hairline); border-radius:8px; display:grid; place-items:center; color:var(--amber); transition:transform .25s ease;}
+  .faq-item.open .pm{transform:rotate(45deg);}
+  .faq-a{max-height:0; overflow:hidden; transition:max-height .3s ease;}
+  .faq-a p{padding:0 26px 24px; font-size:0.95rem; max-width:640px;}
+
+  /* ---------- final cta ---------- */
+  .final{text-align:center;}
+  .final h2{max-width:680px; margin:0 auto;}
+  .final p{max-width:600px; margin:22px auto 0;}
+  .final .btn{margin-top:32px;}
+  .final .quiet{display:block; margin-top:18px; font-size:0.9rem; color:var(--text-muted);}
+  .final .quiet a{color:var(--amber); border-bottom:1px solid rgba(224,164,88,0.3); padding-bottom:1px;}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--hairline); padding:48px 0;}
+  .foot-inner{display:flex; flex-wrap:wrap; gap:22px; justify-content:space-between; align-items:center;}
+  .foot-links{display:flex; flex-wrap:wrap; gap:22px; font-size:0.9rem;}
+  .foot-links a{color:var(--text-muted);} .foot-links a:hover{color:var(--amber);}
+  footer .tag{color:var(--text-muted); font-size:0.9rem; margin-top:6px;}
+
+  /* ---------- reveal motion ---------- */
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1; transform:none;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:820px){
+    .nav-links{display:none;} .nav-toggle{display:block;} .nav-right .btn{display:none;}
+    .steps,.paths,.grid-3,.ethics-grid,.tiers{grid-template-columns:1fr;}
+    .tier.featured{transform:none;}
+    .hero{min-height:auto; padding-top:70px; padding-bottom:90px;}
+    .scroll-cue{display:none;}
+  }
+  @media (max-width:520px){
+    section{padding:72px 0;}
+    .risk-chip{flex-wrap:wrap; gap:10px 16px;}
+    .hero h1{font-size:2.25rem;}
+    .btn{padding:13px 22px;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+    .reveal{opacity:1; transform:none;}
+    .hero-video,.cta-video{display:none !important;}
+    .hero-static-glow{display:block !important;}
+    #hero-canvas{display:none;}
+    .scroll-cue .line{animation:none;}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main" style="position:absolute;left:-9999px;">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="wordmark" href="#" aria-label="Veritas — Relationship Intelligence">
+      Veritas <span class="sub">— Relationship Intelligence</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#services">Services</a>
+      <a href="#process">Process</a>
+      <a href="#ethics">Ethics</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-right">
+      <a class="btn btn-primary" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#services">Services</a>
+    <a href="#process">Process</a>
+    <a href="#ethics">Ethics</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <video class="hero-layer hero-video" autoplay muted loop playsinline poster="images/veritas-hero.png" aria-hidden="true">
+      <source src="videos/hero-hd.mp4" type="video/mp4" />
+    </video>
+    <canvas class="hero-layer" id="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-layer hero-static-glow" aria-hidden="true"></div>
+    <div class="hero-layer hero-grain" aria-hidden="true"></div>
+    <div class="hero-layer hero-vignette" aria-hidden="true"></div>
+
+    <div class="container hero-content">
+      <p class="eyebrow reveal">Free instant check on WhatsApp</p>
+      <h1 class="reveal">Is the person you met online really who they say they are?</h1>
+      <p class="lead reveal">Send the chat to Veritas on WhatsApp for an instant, private read on romance-scam risk — free.</p>
+      <div class="hero-cta reveal">
+        <a class="btn btn-primary" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.052zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+          Check them on WhatsApp
+        </a>
+        <a class="btn btn-secondary" href="#pricing">Get an in-depth report</a>
+      </div>
+      <div class="trust-row reveal">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Free instant check</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Private — chats aren't stored</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>No hacking, no stalking</span>
+      </div>
+      <div class="risk-chip reveal" aria-label="Risk ratings: green, amber, red">
+        <span class="dot"><i style="background:var(--risk-green)"></i>Looks clear</span>
+        <span class="dot"><i style="background:var(--risk-amber)"></i>Caution</span>
+        <span class="dot"><i style="background:var(--risk-red)"></i>High risk</span>
+      </div>
+    </div>
+    <div class="scroll-cue" aria-hidden="true"><span class="line"></span>Scroll</div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="process">
+    <div class="container">
+      <div class="section-head center reveal">
+        <p class="eyebrow">The free check</p>
+        <h2>Clarity in three messages.</h2>
+        <p class="muted">No app, no account. Just message Veritas on WhatsApp.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal"><div class="num">01</div><h3>Message Veritas on WhatsApp</h3><p>Tap the button and say hello. No app to install and no account to create.</p></div>
+        <div class="step reveal"><div class="num">02</div><h3>Send the chat, a screenshot, or their photo</h3><p>Paste the messages they sent you, share a screenshot, or send their profile picture.</p></div>
+        <div class="step reveal"><div class="num">03</div><h3>Get an instant risk read</h3><p>Veritas replies in seconds with a 🟢 / 🟠 / 🔴 rating and the warning signs it found — privately.</p></div>
+      </div>
+      <div class="center-cta reveal">
+        <a class="btn btn-primary" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Start the free check</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TWO PATHS -->
+  <section id="paths">
+    <div class="container">
+      <div class="section-head center reveal">
+        <p class="eyebrow">Two paths</p>
+        <h2>Start free. Go deeper when it matters.</h2>
+      </div>
+      <div class="paths">
+        <div class="path reveal">
+          <h3>Instant WhatsApp check</h3>
+          <div class="price free">Free</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Paste a chat, screenshot, or photo</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Instant risk rating with reasons</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Private — your chats aren't stored</li>
+          </ul>
+          <a class="btn btn-primary btn-block" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Check them on WhatsApp</a>
+        </div>
+        <div class="path elevated reveal">
+          <h3>In-depth human report</h3>
+          <div class="price">From $149</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Human OSINT review of identity and footprint</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Reverse-image and timeline-inconsistency checks</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Documented PDF report with sources</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="#pricing">See report options</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM (editorial, 2nd video bg) -->
+  <section class="problem" id="problem">
+    <video class="cta-video" autoplay muted loop playsinline aria-hidden="true">
+      <source src="videos/ambient.mp4" type="video/mp4" />
+    </video>
+    <div class="veil" aria-hidden="true"></div>
+    <div class="container">
+      <div class="reveal" style="max-width:780px;">
+        <span class="serif">Clarity before commitment</span>
+        <h2>When the story doesn't quite hold together, uncertainty becomes exhausting.</h2>
+        <p class="body lead">Veritas helps clients replace speculation with verified, source-backed facts. The work is calm, documented, and bounded. This is not surveillance theater — it's ethical verification for people making emotionally significant decisions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="eyebrow">Services</p>
+        <h2>Discreet research for complex relationship questions.</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 11a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 20a7 7 0 0114 0"/></svg></div><h3>Identity Verification</h3><p>Confirm whether someone's name, photos, profiles, and public footprint are consistent with the story they are telling.</p></div>
+        <div class="card reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M12 8v4M12 15h.01"/></svg></div><h3>Catfish &amp; Romance Scam Review</h3><p>Analyze suspicious online relationships, stolen photos, fake accounts, romance scam patterns, and emotional manipulation signals.</p></div>
+        <div class="card reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><h3>Digital Footprint Research</h3><p>Review publicly available records, social media activity, aliases, timelines, and inconsistencies using ethical OSINT methods.</p></div>
+        <div class="card reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg></div><h3>Long-Distance Relationship Verification</h3><p>For clients who need confidence before investing emotionally, financially, or traveling to meet someone.</p></div>
+        <div class="card reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><h3>Dating Background Check</h3><p>Review publicly available indicators around identity, relationship status, criminal/court records where legally accessible, and major inconsistencies.</p></div>
+        <div class="card reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div><h3>Confidential Evidence Report</h3><p>Receive a clear private report with findings, source links, screenshots where appropriate, confidence levels, and recommended next steps.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ETHICS -->
+  <section id="ethics">
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="eyebrow">Ethics</p>
+        <h2>Built for clarity, not paranoia.</h2>
+        <p class="lead">The strongest findings are the ones gathered lawfully and explained carefully.</p>
+      </div>
+      <div class="ethics-grid">
+        <div class="pillar reveal"><h3>Lawful sources</h3><p>Research is limited to public-source information and materials the client is authorized to provide.</p></div>
+        <div class="pillar reveal"><h3>Private by design</h3><p>Sensitive details are handled with a need-to-know posture from intake through report delivery.</p></div>
+        <div class="pillar reveal"><h3>Evidence over certainty theater</h3><p>Reports distinguish verified facts, confidence levels, limitations, and unanswered questions.</p></div>
+      </div>
+      <p class="fineprint reveal">Availability of certain services may depend on your jurisdiction. This service is not legal advice and is not a substitute for a licensed private investigator where licensing is required.</p>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="container">
+      <div class="section-head center reveal">
+        <p class="eyebrow">Pricing</p>
+        <h2>Focused review scopes for different levels of concern.</h2>
+      </div>
+      <div class="tiers">
+        <div class="tier reveal">
+          <h3>Essential Check</h3>
+          <div class="price">$149</div>
+          <p class="desc muted">For early doubts, online dating verification, or catfish concerns.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Identity consistency review</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Reverse image checks</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Basic social footprint review</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Summary report</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>48–72 hour delivery</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="intake/">Start review</a>
+        </div>
+        <div class="tier featured reveal">
+          <span class="tag">Most selected</span>
+          <h3>Deep Clarity</h3>
+          <div class="price">$399</div>
+          <p class="desc muted">For serious relationships, long-distance concerns, or repeated inconsistencies.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Expanded OSINT review</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Alias/profile research</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Timeline inconsistency analysis</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Public record review where available</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Detailed PDF report</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Recommended next steps</li>
+          </ul>
+          <a class="btn btn-primary btn-block" href="intake/">Start review</a>
+        </div>
+        <div class="tier reveal">
+          <h3>Concierge Review</h3>
+          <div class="price">$899+</div>
+          <p class="desc muted">For sensitive, complex, or high-stakes relationship decisions.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Private intake call</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Custom investigation scope</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Senior analyst review</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Evidence packet</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Optional debrief call</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="intake/">Start review</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-head center reveal">
+        <p class="eyebrow">FAQ</p>
+        <h2>Direct answers for sensitive decisions.</h2>
+      </div>
+      <div class="faq-wrap reveal" id="faq-list">
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Is this legal?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>We only use lawful, public-source information and information provided by the client. We do not hack, stalk, impersonate, or access private accounts.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Can you prove someone is cheating?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>We do not promise conclusions we cannot prove. We identify verified facts, inconsistencies, and risk indicators based on available evidence.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Do you hack phones or social media accounts?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>No. We never hack accounts, access private messages, install spyware, or bypass privacy controls.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Is this confidential?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>Yes. Confidentiality is central to the service. Intake details and reports are handled privately.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>What do I receive?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>A private clarity report with findings, evidence, confidence levels, limitations, and next-step recommendations.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Who is this for?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>People in online dating, long-distance relationships, pre-marriage situations, post-betrayal confusion, or situations where something does not feel consistent.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Is the WhatsApp check really free?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>Yes. The instant WhatsApp check is free and private — we don't store your chats or photos. The in-depth human report is the paid option for when you want deeper verification.</p></div></div>
+        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>What's the difference between the bot and the report?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>The WhatsApp bot gives an instant, automated read of romance-scam warning signs in the messages or photos you send. The in-depth report is a human OSINT review — identity checks, reverse-image and footprint research, and a documented PDF with sources and next steps.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final" id="report">
+    <div class="container reveal">
+      <p class="eyebrow" style="text-align:center;">In-depth report</p>
+      <h2>Want a deeper, human investigation?</h2>
+      <p class="lead">The WhatsApp check is instant and free. When the decision is bigger, request a paid in-depth report: a human OSINT review with sources, confidence levels, and recommended next steps. Share what you have and we will follow up to confirm scope and payment.</p>
+      <a class="btn btn-primary" href="intake/">Request your in-depth report</a>
+      <span class="quiet">Or <a href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">try the free WhatsApp check first</a>.</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container foot-inner">
+    <div>
+      <div class="wordmark" style="font-size:0.95rem;">Veritas <span class="sub">— Relationship Intelligence</span></div>
+      <p class="tag">Ethical verification for relationship clarity.</p>
+    </div>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a href="#services">Services</a>
+      <a href="#ethics">Ethics</a>
+      <a href="intake/">Intake</a>
+    </nav>
+    <p class="tag">Confidential by design.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ----- mobile menu ----- */
+  var toggle = document.getElementById("navToggle");
+  var menu = document.getElementById("mobileMenu");
+  if (toggle && menu){
+    toggle.addEventListener("click", function(){
+      var open = menu.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    menu.querySelectorAll("a").forEach(function(a){
+      a.addEventListener("click", function(){ menu.classList.remove("open"); toggle.setAttribute("aria-expanded","false"); });
+    });
+  }
+
+  /* ----- nav condense on scroll ----- */
+  var nav = document.getElementById("nav");
+  window.addEventListener("scroll", function(){
+    if (window.scrollY > 24) nav.classList.add("scrolled"); else nav.classList.remove("scrolled");
+  }, {passive:true});
+
+  /* ----- FAQ accordion (one open at a time) ----- */
+  document.querySelectorAll(".faq-q").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var item = btn.parentElement;
+      var ans = item.querySelector(".faq-a");
+      var isOpen = item.classList.contains("open");
+      document.querySelectorAll(".faq-item.open").forEach(function(o){
+        o.classList.remove("open");
+        o.querySelector(".faq-a").style.maxHeight = null;
+        o.querySelector(".faq-q").setAttribute("aria-expanded","false");
+      });
+      if (!isOpen){
+        item.classList.add("open");
+        ans.style.maxHeight = ans.scrollHeight + "px";
+        btn.setAttribute("aria-expanded","true");
+      }
+    });
+  });
+
+  /* ----- reveal on scroll ----- */
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)){
+    reveals.forEach(function(el){ el.classList.add("in"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, {threshold:0.12, rootMargin:"0px 0px -8% 0px"});
+    reveals.forEach(function(el){ io.observe(el); });
+    /* hero staggered load-in */
+    var heroBits = document.querySelectorAll(".hero-content .reveal");
+    heroBits.forEach(function(el,i){ setTimeout(function(){ el.classList.add("in"); }, 120 + i*80); });
+  }
+
+  /* ----- video / reduced motion ----- */
+  if (reduce){
+    document.querySelectorAll("video").forEach(function(v){ try{ v.pause(); v.removeAttribute("autoplay"); }catch(e){} });
+  }
+
+  /* ----- ambient warm-glow canvas (Stripe-style, dialed quiet) ----- */
+  var canvas = document.getElementById("hero-canvas");
+  if (canvas && !reduce){
+    var ctx = canvas.getContext("2d");
+    var blobs = [], W=0, H=0, dpr = Math.min(window.devicePixelRatio||1, 2);
+    var COLORS = ["224,164,88", "181,116,47", "242,192,121"];
+    function resize(){
+      W = canvas.offsetWidth; H = canvas.offsetHeight;
+      canvas.width = W*dpr; canvas.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    function seed(){
+      blobs = [];
+      var n = 4;
+      for (var i=0;i<n;i++){
+        blobs.push({
+          x: Math.random()*W, y: Math.random()*H*0.9,
+          r: (Math.min(W,H)) * (0.45 + Math.random()*0.4),
+          c: COLORS[i % COLORS.length],
+          dx: (Math.random()-0.5)*0.12, dy: (Math.random()-0.5)*0.10,
+          a: 0.10 + Math.random()*0.10
+        });
+      }
+    }
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      ctx.globalCompositeOperation = "lighter";
+      for (var i=0;i<blobs.length;i++){
+        var b = blobs[i];
+        b.x += b.dx; b.y += b.dy;
+        if (b.x < -b.r*0.5 || b.x > W + b.r*0.5) b.dx *= -1;
+        if (b.y < -b.r*0.5 || b.y > H + b.r*0.5) b.dy *= -1;
+        var g = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
+        g.addColorStop(0, "rgba("+b.c+","+b.a+")");
+        g.addColorStop(1, "rgba("+b.c+",0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+      }
+    }
+    var last = 0, running = true;
+    function loop(t){
+      if (!running) return;
+      if (t - last > 33){ draw(); last = t; }   /* ~30fps cap */
+      requestAnimationFrame(loop);
+    }
+    function start(){ if (!running){ running = true; requestAnimationFrame(loop); } }
+    function stop(){ running = false; }
+    document.addEventListener("visibilitychange", function(){ if (document.hidden) stop(); else start(); });
+    window.addEventListener("resize", function(){ resize(); seed(); }, {passive:true});
+    resize(); seed(); requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>

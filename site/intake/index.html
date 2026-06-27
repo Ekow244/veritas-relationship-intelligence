@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Confidential intake — Veritas Relationship Intelligence</title>
+<meta name="description" content="Request a confidential in-depth report. Share the facts you have; we handle the question carefully and lawfully." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0A0A0B; --surface:#141416; --surface-2:#1B1B1E;
+    --hairline:rgba(255,255,255,0.08);
+    --text:#F5F2EC; --text-muted:#9C978D;
+    --amber:#E0A458; --amber-bright:#F2C079;
+    --container:760px; --gutter:24px; --radius-input:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text-muted); font-family:"Inter",system-ui,sans-serif; font-size:1rem; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--amber); text-decoration:none;}
+  .container{max-width:var(--container); margin:0 auto; padding:0 var(--gutter);}
+  header{border-bottom:1px solid var(--hairline); position:sticky; top:0; background:rgba(10,10,11,0.82); backdrop-filter:blur(18px); z-index:10;}
+  .nav-inner{display:flex; align-items:center; justify-content:space-between; max-width:var(--container); margin:0 auto; padding:16px var(--gutter);}
+  .wordmark{color:var(--text); font-weight:600;}
+  .wordmark .sub{color:var(--text-muted); font-weight:400; font-size:0.8rem;}
+  .back{font-size:0.9rem; font-weight:500; color:var(--text-muted);}
+  .back:hover{color:var(--text);}
+  main{padding:clamp(48px,8vh,90px) 0;}
+  .eyebrow{font-weight:500; font-size:0.75rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin:0 0 16px;}
+  h1{color:var(--text); font-weight:600; letter-spacing:-0.03em; line-height:1.1; font-size:clamp(2rem,5vw,3rem); margin:0;}
+  .lead{color:var(--text); margin:18px 0 0; font-size:1.0625rem;}
+  form{margin-top:40px; display:grid; gap:20px;}
+  .row{display:grid; gap:20px; grid-template-columns:1fr 1fr;}
+  label{display:grid; gap:8px;}
+  label > span{font-size:0.9rem; font-weight:500; color:var(--text);}
+  .field{width:100%; border-radius:var(--radius-input); border:1px solid var(--hairline); background:var(--surface-2); padding:13px 15px; color:var(--text); font-family:inherit; font-size:1rem; outline:none; transition:border-color .16s ease, box-shadow .16s ease;}
+  .field::placeholder{color:rgba(156,151,141,0.6);}
+  .field:focus{border-color:var(--amber); box-shadow:0 0 0 3px rgba(224,164,88,0.14);}
+  select.field option{color:#171915;}
+  textarea.field{resize:vertical; min-height:90px;}
+  .consent{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--hairline); background:var(--surface); border-radius:12px; padding:16px; font-size:0.9rem; line-height:1.5;}
+  .consent input{margin-top:3px; width:16px; height:16px; accent-color:var(--amber);}
+  .actions{display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between;}
+  .note{font-size:0.85rem; color:var(--text-muted); display:inline-flex; align-items:center; gap:8px; max-width:60%;}
+  .note svg{width:15px; height:15px; color:var(--amber); flex-shrink:0;}
+  .btn{display:inline-flex; align-items:center; gap:9px; border:none; border-radius:999px; padding:14px 26px; font-weight:600; font-size:0.9375rem; font-family:inherit; cursor:pointer; background:var(--amber); color:#0A0A0B; transition:background .18s ease, transform .18s ease;}
+  .btn:hover{background:var(--amber-bright); transform:translateY(-1px);}
+  :focus-visible{outline:2px solid var(--amber); outline-offset:3px; border-radius:6px;}
+  footer{border-top:1px solid var(--hairline); padding:32px 0; font-size:0.85rem; color:var(--text-muted);}
+  @media (max-width:560px){ .row{grid-template-columns:1fr;} .note{max-width:100%;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="nav-inner">
+    <a class="wordmark" href="../">Veritas <span class="sub">— Relationship Intelligence</span></a>
+    <a class="back" href="../">← Back to home</a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <p class="eyebrow">Confidential intake</p>
+    <h1>Bring the facts you have. We'll handle the question carefully.</h1>
+    <p class="lead">Start with a private intake. You don't need to know exactly what to ask yet — the first step is organizing the concern into a lawful, ethical review scope. We'll follow up to confirm scope and payment.</p>
+
+    <form action="mailto:intake@veritasri.example" method="post" enctype="text/plain">
+      <div class="row">
+        <label><span>First name</span><input class="field" name="firstName" autocomplete="given-name" placeholder="First name" required /></label>
+        <label><span>Email</span><input class="field" type="email" name="email" autocomplete="email" placeholder="you@example.com" required /></label>
+      </div>
+
+      <label><span>Which report?</span>
+        <select class="field" name="reportTier" required>
+          <option value="Essential Check">Essential Check — $149</option>
+          <option value="Deep Clarity" selected>Deep Clarity — $399</option>
+          <option value="Concierge Review">Concierge Review — $899+</option>
+        </select>
+      </label>
+
+      <label><span>What situation best describes your concern?</span>
+        <select class="field" name="concernType" required>
+          <option value="">Select one</option>
+          <option>Online dating verification</option>
+          <option>Long-distance relationship concern</option>
+          <option>Catfish or romance scam concern</option>
+          <option>Pre-commitment clarity</option>
+          <option>Repeated inconsistencies</option>
+          <option>Other confidential matter</option>
+        </select>
+      </label>
+
+      <div class="row">
+        <label><span>Person's known name</span><input class="field" name="knownName" placeholder="Known name" /></label>
+        <label><span>Phone number if known</span><input class="field" name="knownPhone" inputmode="tel" placeholder="+1…" /></label>
+      </div>
+
+      <label><span>Social media links / handles</span>
+        <textarea class="field" name="socialLinks" rows="3" placeholder="Instagram, TikTok, Facebook, LinkedIn, dating profiles, or public links"></textarea>
+      </label>
+
+      <label><span>Photos or links</span>
+        <textarea class="field" name="photosOrLinks" rows="3" placeholder="Paste public image links, shared album links, profile URLs, or note what files you can provide later."></textarea>
+      </label>
+
+      <label><span>What feels inconsistent?</span>
+        <textarea class="field" name="inconsistencies" rows="5" placeholder="Share the facts, timeline, and concerns without exaggeration. We'll help separate what is known from what is uncertain." required></textarea>
+      </label>
+
+      <label><span>What outcome are you hoping for?</span>
+        <textarea class="field" name="desiredOutcome" rows="4" placeholder="For example: confirm identity, understand risk indicators, prepare for a conversation, or decide whether to continue." required></textarea>
+      </label>
+
+      <label class="consent">
+        <input type="checkbox" name="clientConsent" value="I confirm lawful and non-harassing use" required />
+        <span>I confirm I will not use this service for harassment, stalking, revenge, threats, illegal surveillance, or any unlawful purpose.</span>
+      </label>
+
+      <div class="actions">
+        <span class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+          Focus on facts, dates, profiles, and specific inconsistencies.
+        </span>
+        <button class="btn" type="submit">Submit confidential intake</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<footer>
+  <div class="container">Confidential by design. · <a href="../">Veritas — Relationship Intelligence</a></div>
+</footer>
+</body>
+</html>
