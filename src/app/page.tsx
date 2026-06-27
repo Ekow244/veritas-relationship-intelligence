@@ -3,10 +3,10 @@ import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  FileText,
   LockKeyhole,
   ShieldCheck,
 } from "lucide-react";
+import { IntakeForm } from "@/components/IntakeForm";
 import { Navigation } from "@/components/Navigation";
 import { SectionHeading } from "@/components/SectionHeading";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -367,8 +367,8 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/intake"
+                <a
+                  href="#report"
                   className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-[#0d0f0d] ${
                     tier.highlighted
                       ? "bg-amber-200 text-stone-950 hover:bg-amber-100"
@@ -377,7 +377,7 @@ export default function Home() {
                 >
                   Start review
                   <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
+                </a>
               </article>
             ))}
           </div>
@@ -410,61 +410,32 @@ export default function Home() {
       </section>
 
       <section
-        id="confidential-intake"
+        id="report"
         className="border-t border-white/10 bg-[linear-gradient(135deg,#151712,#10130f_45%,#17150f)]"
       >
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-24">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-300">
-              Confidential intake
+              In-depth report
             </p>
             <h2 className="mt-4 text-4xl font-semibold tracking-tight text-stone-50 sm:text-5xl">
-              Bring the facts you have. We will handle the question carefully.
+              Want a deeper, human investigation?
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-300">
-              Start with a private intake. You do not need to know exactly what
-              to ask yet; the first step is organizing the concern into a lawful,
-              ethical review scope.
+              The WhatsApp check is instant and free. When the decision is bigger,
+              request a paid in-depth report: a human OSINT review with sources,
+              confidence levels, and recommended next steps. Share what you have
+              below and we will follow up to confirm scope and payment.
             </p>
-            <Link
-              href="/intake"
-              className="mt-8 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-200 px-5 py-3.5 text-sm font-semibold text-stone-950 shadow-[0_24px_70px_rgba(245,184,91,0.18)] transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-[#11130f]"
-            >
-              Start Confidential Review
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-[#0d0f0d]/70 p-6">
-            <div className="flex items-center gap-3 border-b border-white/10 pb-5">
-              <span className="grid size-11 place-items-center rounded-lg border border-amber-200/25 bg-amber-100/10 text-amber-200">
-                <FileText aria-hidden="true" className="size-5" />
-              </span>
-              <div>
-                <h3 className="text-lg font-semibold text-stone-50">
-                  Private clarity report
-                </h3>
-                <p className="text-sm text-stone-400">
-                  Findings, evidence, limits, and next steps.
-                </p>
-              </div>
+            <div className="mt-8">
+              <WhatsAppButton
+                variant="outline"
+                label="Or try the free WhatsApp check first"
+              />
             </div>
-            <dl className="mt-6 grid gap-4">
-              {[
-                ["Evidence", "Source links and screenshots where appropriate"],
-                ["Confidence", "Clear distinction between fact and uncertainty"],
-                ["Boundaries", "No hacking, stalking, tracking, or impersonation"],
-                ["Guidance", "Practical options for what to do next"],
-              ].map(([term, description]) => (
-                <div key={term} className="grid gap-1">
-                  <dt className="text-sm font-semibold text-amber-100">
-                    {term}
-                  </dt>
-                  <dd className="text-sm leading-6 text-stone-300">
-                    {description}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-[#0d0f0d]/70 p-6 sm:p-8">
+            <IntakeForm />
           </div>
         </div>
       </section>
