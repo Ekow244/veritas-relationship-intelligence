@@ -106,6 +106,13 @@
   .hero-static-glow{display:none; background:radial-gradient(60% 50% at 30% 30%, rgba(224,164,88,0.16), transparent 70%), radial-gradient(50% 45% at 80% 60%, rgba(181,116,47,0.14), transparent 70%);}
   .hero-content{position:relative; z-index:2; max-width:780px;}
   .hero h1{margin-top:8px;}
+  /* typing effect: ghost reserves final height (no layout shift); typed text overlays it */
+  .hero-h1.typing{position:relative;}
+  .hero-h1.typing .ghost{visibility:hidden;}
+  .hero-h1.typing .typed{position:absolute; inset:0;}
+  .hero-h1.typing .typed::after{content:""; display:inline-block; width:0.055em; height:0.92em; background:var(--amber); margin-left:0.08em; vertical-align:-0.06em; animation:caret-blink 1s step-end infinite;}
+  .hero-h1.typing .typed.done::after{opacity:0; animation:none;}
+  @keyframes caret-blink{50%{opacity:0;}}
   .hero .lead{margin-top:24px; max-width:600px;}
   .hero-cta{display:flex; flex-wrap:wrap; gap:14px; margin-top:34px;}
   .trust-row{display:flex; flex-wrap:wrap; gap:18px 26px; margin-top:34px; font-size:0.85rem; color:var(--text-muted);}
@@ -272,7 +279,7 @@
     <div class="hero-layer hero-vignette" aria-hidden="true"></div>
 
     <div class="container hero-content">
-      <h1 class="reveal">Is the person you met online really who they say they are?</h1>
+      <h1 class="reveal hero-h1" id="hero-headline">Is the person you met online really who they say they are?</h1>
       <p class="lead reveal">Send the chat to Veritas on WhatsApp for an instant, private read on romance-scam risk — free.</p>
       <div class="hero-cta reveal">
         <a class="btn btn-primary" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">
@@ -439,6 +446,24 @@
     /* hero staggered load-in */
     var heroBits = document.querySelectorAll(".hero-content .reveal");
     heroBits.forEach(function(el,i){ setTimeout(function(){ el.classList.add("in"); }, 120 + i*80); });
+  }
+
+  /* ----- hero headline typing effect ----- */
+  var hl = document.getElementById("hero-headline");
+  if (hl){
+    var full = hl.textContent.trim();
+    hl.setAttribute("aria-label", full);
+    if (!reduce){
+      hl.classList.add("typing");
+      hl.innerHTML = '<span class="ghost" aria-hidden="true">' + full + '</span><span class="typed" aria-hidden="true"></span>';
+      var typed = hl.querySelector(".typed");
+      var ti = 0;
+      setTimeout(function tick(){
+        typed.textContent = full.slice(0, ti);
+        if (ti < full.length){ ti++; setTimeout(tick, 42); }
+        else { typed.classList.add("done"); }
+      }, 420);
+    }
   }
 
   /* ----- video / reduced motion ----- */
