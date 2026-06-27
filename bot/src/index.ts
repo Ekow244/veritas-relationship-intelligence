@@ -4,7 +4,9 @@ import { getConfig } from "./config.js";
 import { processIncomingMessage, processMetaMessageForWhatsApp } from "./bot.js";
 import { SessionStore } from "./session-store.js";
 import { DataStore } from "./storage.js";
-import { parseTwilioMessage, twimlMessage } from "./twilio.js";
+import { parseTwilioMessage, planTwilioResponse, sendTwilioWhatsApp, twimlMessage } from "./twilio.js";
+import { classifyMessage } from "./classifier.js";
+import { analyzingMessage } from "./formatter.js";
 import { hydrateMetaImage, parseMetaWebhook, sendWhatsAppText } from "./whatsapp-cloud.js";
 import {
   jsonResponse,
@@ -85,7 +87,27 @@ const server = createServer(async (req, res) => {
         return textResponse(res, 401, "Invalid signature");
       }
 
-      const replies = await processIncomingMessage(runtime, parseTwilioMessage(params));
+      const message = parseTwilioMessage(params);
+      const canAsync = Boolean(config.twilio.accountSid && config.twilio.authToken);
+      const plan = planTwilioResponse(params, classifyMessage(message), canAsync);
+
+      if (plan.mode === "async") {
+        textResponse(res, 200, twimlMessage(analyzingMessage()), "text/xml; charset=utf-8");
+        void processIncomingMessage(runtime, message)
+          .then((replies) => Promise.all(
+            replies.map((reply) => sendTwilioWhatsApp(config, plan.channelTo, plan.channelFrom, reply)),
+          ))
+          .catch((error) => {
+            console.error(JSON.stringify({
+              level: "error",
+              event: "twilio_async_processing_failed",
+              message: error instanceof Error ? error.message : String(error),
+            }));
+          });
+        return;
+      }
+
+      const replies = await processIncomingMessage(runtime, message);
       return textResponse(res, 200, twimlMessage(replies.join("\n\n")), "text/xml; charset=utf-8");
     }
 
