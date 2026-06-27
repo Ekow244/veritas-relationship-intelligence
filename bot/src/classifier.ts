@@ -18,7 +18,7 @@ const outOfScopePatterns = [
   /\b(rental|landlord|apartment|job offer|employment|crypto only|investment platform|marketplace|shipping item)\b/i,
 ];
 
-const chatPattern = /\b(he said|she said|they said|me:|him:|her:|them:|you:|i said|whatsapp|telegram|sent me|asked me|video call|money|love you)\b/i;
+const chatPattern = /\b(he said|she said|they said|he says|she says|they say|me:|him:|her:|them:|you:|i said|whatsapp|telegram|sent me|send me|asked me|wants me|video call|facetime|money|gift card|loves? (me|you)|love you)\b/i;
 
 export function classifyMessage(message: BotMessage): InputKind {
   const text = message.text?.trim() ?? message.image?.caption?.trim() ?? "";
