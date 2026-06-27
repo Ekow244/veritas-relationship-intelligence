@@ -66,6 +66,7 @@ Optional analysis:
 
 Optional Twilio sandbox:
 
+- `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 
 ## Meta WhatsApp Cloud API Wiring
@@ -104,6 +105,18 @@ https://<your-bot-host>/twilio/webhook
 5. If you set `TWILIO_AUTH_TOKEN`, also set `PUBLIC_BASE_URL` exactly to the deployed origin so signature verification can reconstruct the URL.
 
 Twilio mode replies with TwiML synchronously. It is useful for prototype testing; Meta Cloud API is the cleaner launch path.
+
+### Interim "Analyzing…" message
+
+When `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` are both set, the bot replies to a chat or
+screenshot with an immediate "🔎 Analyzing…" message (synchronous TwiML), then sends the verdict
+as a second message via the Twilio REST API. Without these credentials it falls back to a single
+synchronous verdict reply. `PUBLIC_BASE_URL` must match the deployed origin exactly so inbound
+signature verification passes.
+
+**Keep-warm:** on Render's free tier the service sleeps after ~15 minutes idle and a cold start can
+take ~30s — long enough that the verdict lands well after "Analyzing…". Keep it warm with a cron
+ping to `/health` every ~10 minutes (a free uptime pinger or a scheduled GitHub Action).
 
 ## Deploying the Bot
 
