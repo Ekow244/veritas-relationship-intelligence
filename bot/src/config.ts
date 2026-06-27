@@ -14,6 +14,8 @@ export type BotConfig = {
   };
   twilio: {
     authToken?: string;
+    accountSid?: string;
+    apiBase: string;
   };
   openai: {
     apiKey?: string;
@@ -53,6 +55,8 @@ export function getConfig(): BotConfig {
     },
     twilio: {
       authToken: env("TWILIO_AUTH_TOKEN"),
+      accountSid: env("TWILIO_ACCOUNT_SID"),
+      apiBase: env("TWILIO_API_BASE") ?? "https://api.twilio.com",
     },
     openai: {
       apiKey: env("OPENAI_API_KEY"),
