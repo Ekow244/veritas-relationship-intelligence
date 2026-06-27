@@ -139,8 +139,11 @@
 
   /* ---------- problem (editorial) ---------- */
   .problem{position:relative; overflow:hidden;}
-  .problem .cta-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.16; z-index:0;}
-  .problem .veil{position:absolute; inset:0; background:linear-gradient(180deg, var(--bg) 0%, rgba(10,10,11,0.7) 50%, var(--bg) 100%); z-index:1;}
+  .problem{background:#050506;}
+  .problem .cta-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.9; filter:brightness(1.3) contrast(1.04) saturate(1.06); z-index:0;}
+  .problem .veil{position:absolute; inset:0; z-index:1; background:
+      linear-gradient(90deg, rgba(5,5,6,0.82) 0%, rgba(5,5,6,0.46) 52%, rgba(5,5,6,0.05) 100%),
+      linear-gradient(180deg, rgba(5,5,6,0.35) 0%, rgba(5,5,6,0.12) 45%, rgba(5,5,6,0.45) 100%);}
   .problem .container{position:relative; z-index:2;}
   .problem .serif{display:block; color:var(--amber-bright); font-size:clamp(1.6rem,3vw,2.2rem); margin-bottom:22px;}
   .problem h2{max-width:760px;}
@@ -238,10 +241,8 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="#services">Services</a>
-      <a href="#process">Process</a>
-      <a href="#ethics">Ethics</a>
-      <a href="#pricing">Pricing</a>
-      <a href="#faq">FAQ</a>
+      <a href="pricing/">Pricing</a>
+      <a href="pricing/#faq">FAQ</a>
     </nav>
     <div class="nav-right">
       <a class="btn btn-primary" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
@@ -252,10 +253,8 @@
   </div>
   <div class="mobile-menu" id="mobileMenu">
     <a href="#services">Services</a>
-    <a href="#process">Process</a>
-    <a href="#ethics">Ethics</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#faq">FAQ</a>
+    <a href="pricing/">Pricing</a>
+    <a href="pricing/#faq">FAQ</a>
     <a href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
   </div>
 </header>
@@ -273,7 +272,6 @@
     <div class="hero-layer hero-vignette" aria-hidden="true"></div>
 
     <div class="container hero-content">
-      <p class="eyebrow reveal">Free instant check on WhatsApp</p>
       <h1 class="reveal">Is the person you met online really who they say they are?</h1>
       <p class="lead reveal">Send the chat to Veritas on WhatsApp for an instant, private read on romance-scam risk — free.</p>
       <div class="hero-cta reveal">
@@ -281,39 +279,15 @@
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.052zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
           Check them on WhatsApp
         </a>
-        <a class="btn btn-secondary" href="#pricing">Get an in-depth report</a>
+        <a class="btn btn-secondary" href="pricing/">Get an in-depth report</a>
       </div>
       <div class="trust-row reveal">
         <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Free instant check</span>
         <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Private — chats aren't stored</span>
         <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>No hacking, no stalking</span>
       </div>
-      <div class="risk-chip reveal" aria-label="Risk ratings: green, amber, red">
-        <span class="dot"><i style="background:var(--risk-green)"></i>Looks clear</span>
-        <span class="dot"><i style="background:var(--risk-amber)"></i>Caution</span>
-        <span class="dot"><i style="background:var(--risk-red)"></i>High risk</span>
-      </div>
     </div>
     <div class="scroll-cue" aria-hidden="true"><span class="line"></span>Scroll</div>
-  </section>
-
-  <!-- PROCESS -->
-  <section id="process">
-    <div class="container">
-      <div class="section-head center reveal">
-        <p class="eyebrow">The free check</p>
-        <h2>Clarity in three messages.</h2>
-        <p class="muted">No app, no account. Just message Veritas on WhatsApp.</p>
-      </div>
-      <div class="steps">
-        <div class="step reveal"><div class="num">01</div><h3>Message Veritas on WhatsApp</h3><p>Tap the button and say hello. No app to install and no account to create.</p></div>
-        <div class="step reveal"><div class="num">02</div><h3>Send the chat, a screenshot, or their photo</h3><p>Paste the messages they sent you, share a screenshot, or send their profile picture.</p></div>
-        <div class="step reveal"><div class="num">03</div><h3>Get an instant risk read</h3><p>Veritas replies in seconds with a 🟢 / 🟠 / 🔴 rating and the warning signs it found — privately.</p></div>
-      </div>
-      <div class="center-cta reveal">
-        <a class="btn btn-primary" href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">Start the free check</a>
-      </div>
-    </div>
   </section>
 
   <!-- TWO PATHS -->
@@ -342,7 +316,7 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Reverse-image and timeline-inconsistency checks</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Documented PDF report with sources</li>
           </ul>
-          <a class="btn btn-secondary btn-block" href="#pricing">See report options</a>
+          <a class="btn btn-secondary btn-block" href="pricing/">See report options</a>
         </div>
       </div>
     </div>
@@ -381,96 +355,6 @@
     </div>
   </section>
 
-  <!-- ETHICS -->
-  <section id="ethics">
-    <div class="container">
-      <div class="section-head reveal">
-        <p class="eyebrow">Ethics</p>
-        <h2>Built for clarity, not paranoia.</h2>
-        <p class="lead">The strongest findings are the ones gathered lawfully and explained carefully.</p>
-      </div>
-      <div class="ethics-grid">
-        <div class="pillar reveal"><h3>Lawful sources</h3><p>Research is limited to public-source information and materials the client is authorized to provide.</p></div>
-        <div class="pillar reveal"><h3>Private by design</h3><p>Sensitive details are handled with a need-to-know posture from intake through report delivery.</p></div>
-        <div class="pillar reveal"><h3>Evidence over certainty theater</h3><p>Reports distinguish verified facts, confidence levels, limitations, and unanswered questions.</p></div>
-      </div>
-      <p class="fineprint reveal">Availability of certain services may depend on your jurisdiction. This service is not legal advice and is not a substitute for a licensed private investigator where licensing is required.</p>
-    </div>
-  </section>
-
-  <!-- PRICING -->
-  <section id="pricing">
-    <div class="container">
-      <div class="section-head center reveal">
-        <p class="eyebrow">Pricing</p>
-        <h2>Focused review scopes for different levels of concern.</h2>
-      </div>
-      <div class="tiers">
-        <div class="tier reveal">
-          <h3>Essential Check</h3>
-          <div class="price">$149</div>
-          <p class="desc muted">For early doubts, online dating verification, or catfish concerns.</p>
-          <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Identity consistency review</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Reverse image checks</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Basic social footprint review</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Summary report</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>48–72 hour delivery</li>
-          </ul>
-          <a class="btn btn-secondary btn-block" href="intake/">Start review</a>
-        </div>
-        <div class="tier featured reveal">
-          <span class="tag">Most selected</span>
-          <h3>Deep Clarity</h3>
-          <div class="price">$399</div>
-          <p class="desc muted">For serious relationships, long-distance concerns, or repeated inconsistencies.</p>
-          <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Expanded OSINT review</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Alias/profile research</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Timeline inconsistency analysis</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Public record review where available</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Detailed PDF report</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Recommended next steps</li>
-          </ul>
-          <a class="btn btn-primary btn-block" href="intake/">Start review</a>
-        </div>
-        <div class="tier reveal">
-          <h3>Concierge Review</h3>
-          <div class="price">$899+</div>
-          <p class="desc muted">For sensitive, complex, or high-stakes relationship decisions.</p>
-          <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Private intake call</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Custom investigation scope</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Senior analyst review</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Evidence packet</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Optional debrief call</li>
-          </ul>
-          <a class="btn btn-secondary btn-block" href="intake/">Start review</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section id="faq">
-    <div class="container">
-      <div class="section-head center reveal">
-        <p class="eyebrow">FAQ</p>
-        <h2>Direct answers for sensitive decisions.</h2>
-      </div>
-      <div class="faq-wrap reveal" id="faq-list">
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Is this legal?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>We only use lawful, public-source information and information provided by the client. We do not hack, stalk, impersonate, or access private accounts.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Can you prove someone is cheating?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>We do not promise conclusions we cannot prove. We identify verified facts, inconsistencies, and risk indicators based on available evidence.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Do you hack phones or social media accounts?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>No. We never hack accounts, access private messages, install spyware, or bypass privacy controls.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Is this confidential?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>Yes. Confidentiality is central to the service. Intake details and reports are handled privately.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>What do I receive?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>A private clarity report with findings, evidence, confidence levels, limitations, and next-step recommendations.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Who is this for?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>People in online dating, long-distance relationships, pre-marriage situations, post-betrayal confusion, or situations where something does not feel consistent.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>Is the WhatsApp check really free?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>Yes. The instant WhatsApp check is free and private — we don't store your chats or photos. The in-depth human report is the paid option for when you want deeper verification.</p></div></div>
-        <div class="faq-item"><button class="faq-q" aria-expanded="false"><span>What's the difference between the bot and the report?</span><span class="pm" aria-hidden="true">+</span></button><div class="faq-a"><p>The WhatsApp bot gives an instant, automated read of romance-scam warning signs in the messages or photos you send. The in-depth report is a human OSINT review — identity checks, reverse-image and footprint research, and a documented PDF with sources and next steps.</p></div></div>
-      </div>
-    </div>
-  </section>
-
   <!-- FINAL CTA -->
   <section class="final" id="report">
     <div class="container reveal">
@@ -493,7 +377,7 @@
     <nav class="foot-links" aria-label="Footer">
       <a href="https://wa.me/14155238886?text=join%20behind-across" target="_blank" rel="noopener noreferrer">WhatsApp</a>
       <a href="#services">Services</a>
-      <a href="#ethics">Ethics</a>
+      <a href="pricing/">Pricing</a>
       <a href="intake/">Intake</a>
     </nav>
     <p class="tag">Confidential by design.</p>
