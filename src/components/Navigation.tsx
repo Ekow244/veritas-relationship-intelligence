@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { navigation } from "@/lib/content";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export function Navigation() {
   return (
@@ -35,13 +36,7 @@ export function Navigation() {
           ))}
         </div>
 
-        <Link
-          href="/intake"
-          className="inline-flex items-center gap-2 rounded-lg bg-amber-200 px-4 py-2.5 text-sm font-semibold text-stone-950 shadow-[0_18px_45px_rgba(245,184,91,0.16)] transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-[#0d0f0d]"
-        >
-          Intake
-          <ArrowRight aria-hidden="true" className="size-4" />
-        </Link>
+        <WhatsAppButton label="Chat on WhatsApp" className="px-4 py-2.5" />
       </nav>
     </header>
   );

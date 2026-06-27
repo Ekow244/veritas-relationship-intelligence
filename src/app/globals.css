@@ -76,6 +76,19 @@ select.field option {
   animation: rise-in 700ms ease both;
 }
 
+@keyframes hero-pan {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+.animate-hero-pan {
+  animation: hero-pan 18s ease-in-out infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

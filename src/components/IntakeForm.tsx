@@ -47,6 +47,15 @@ export function IntakeForm() {
       </div>
 
       <label className="grid gap-2">
+        <span className="text-sm font-medium text-stone-200">Which report?</span>
+        <select required name="reportTier" defaultValue="Deep Clarity" className="field">
+          <option value="Essential Check">Essential Check — $149</option>
+          <option value="Deep Clarity">Deep Clarity — $399</option>
+          <option value="Concierge Review">Concierge Review — $899+</option>
+        </select>
+      </label>
+
+      <label className="grid gap-2">
         <span className="text-sm font-medium text-stone-200">
           What situation best describes your concern?
         </span>
