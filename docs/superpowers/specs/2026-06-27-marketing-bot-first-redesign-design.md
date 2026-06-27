@@ -60,7 +60,7 @@ export const whatsapp = {
   // To go to production: set number to your production WhatsApp number and change
   // prefillText to a friendly greeting (e.g. "Hi, I'd like to check someone").
   number: "14155238886",
-  prefillText: "join <your-sandbox-code>",
+  prefillText: "join behind-across",
 };
 
 export function whatsappHref(): string {
