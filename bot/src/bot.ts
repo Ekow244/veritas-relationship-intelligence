@@ -5,8 +5,10 @@ import { detectHeuristicSignals } from "./taxonomy.js";
 import {
   analyzingMessage,
   askForMoreMessage,
+  clarifyQuestion,
   crisisMessage,
   deleteConfirmationMessage,
+  followUpMessage,
   formatVerdict,
   greetingMessage,
   imageNeedsVisionMessage,
@@ -76,10 +78,23 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     .filter((item) => item.text)
     .map((item) => item.text)
     .join(" ");
-  const hasHeuristicSignals = detectHeuristicSignals(combinedText).signals.length > 0;
-  const textSignalsReady = combinedText.length > 80 || hasHeuristicSignals;
+  const heuristic = detectHeuristicSignals(combinedText);
+  const hasSignal = (type: string) => heuristic.signals.some((signal) => signal.type === type);
+  const haveMoney = hasSignal("money_request");
+  const haveVideo = hasSignal("refuses_video") || heuristic.balancingSignals.some((label) => /video/i.test(label));
+  const haveOffApp = hasSignal("offplatform_pivot");
   const imageReady = updated.inputs.some((item) => item.image?.dataUrl);
 
+  // Attentive touch: ask one verifying question before the first verdict, unless the
+  // situation is already information-rich (an image, or money plus video/off-app context).
+  const infoRich = imageReady || (haveMoney && (haveVideo || haveOffApp));
+  if (!session.clarifierAsked && !infoRich) {
+    runtime.sessions.markClarifierAsked(userRef);
+    const missing = !haveMoney ? "money" : !haveVideo ? "video" : "offplatform";
+    return [clarifyQuestion(missing)];
+  }
+
+  const textSignalsReady = combinedText.length > 80 || heuristic.signals.length > 0;
   if (!textSignalsReady && !imageReady) {
     return [askForMoreMessage()];
   }
@@ -108,7 +123,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   };
   await runtime.data.appendCase(storedCase);
 
-  return [formatVerdict(verdict)];
+  return [formatVerdict(verdict), followUpMessage()];
 }
 
 export async function processMetaMessageForWhatsApp(

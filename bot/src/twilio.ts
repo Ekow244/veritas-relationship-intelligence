@@ -48,6 +48,33 @@ export function planTwilioResponse(
   return { mode: "sync" };
 }
 
+export async function hydrateTwilioImage(config: BotConfig, message: BotMessage): Promise<BotMessage> {
+  const mediaUrl = message.image?.url;
+  if (!mediaUrl || message.image?.dataUrl) return message;
+
+  const { accountSid, authToken } = config.twilio;
+  if (!accountSid || !authToken) return message;
+
+  const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+  const response = await fetch(mediaUrl, {
+    headers: { authorization: `Basic ${auth}` },
+  });
+  if (!response.ok) return message;
+
+  const contentType = response.headers.get("content-type") ?? message.image?.mimeType ?? "image/jpeg";
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const base64 = bytes.toString("base64");
+
+  return {
+    ...message,
+    image: {
+      ...message.image,
+      mimeType: contentType,
+      dataUrl: `data:${contentType};base64,${base64}`,
+    },
+  };
+}
+
 export async function sendTwilioWhatsApp(
   config: BotConfig,
   toRaw: string,

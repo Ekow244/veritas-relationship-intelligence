@@ -8,16 +8,38 @@ const riskEmoji: Record<RiskLevel, string> = {
 
 export function greetingMessage(): string {
   return [
-    "Hi — I’m Veritas.",
+    "👋 Hi, I’m Veritas — I help you check if someone might be a romance scammer.",
     "",
-    "Paste a romantic chat, send a chat screenshot, or send profile photos. I’ll look for romance-scam signals and explain what I find.",
+    "Send me any of these about the person you’re talking to:",
+    "• 📷 A screenshot of your chat",
+    "• 💬 Copy-paste the messages they sent you",
+    "• 🖼️ Their profile photo",
     "",
-    "Privacy: I minimize what I store. Reply DELETE anytime to remove your session data.",
+    "I’ll reply with a risk rating — 🟢 low / 🟠 medium / 🔴 high — and explain the warning signs.",
+    "",
+    "It helps to mention if they’ve asked for money, dodged a video call, or pushed to chat off the dating app.",
+    "",
+    "🔒 I don’t keep your chats or photos. Reply DELETE anytime to wipe your data.",
   ].join("\n");
 }
 
 export function analyzingMessage(): string {
-  return "🔎 Analyzing the signals now. I’ll reply with a short verdict and the reasons.";
+  return "🔎 Got it — taking a look now…";
+}
+
+export function clarifyQuestion(missing: "money" | "video" | "offplatform"): string {
+  switch (missing) {
+    case "money":
+      return "💰 Before I give you a read — has this person asked you for money, gift cards, or crypto, even a small “emergency” loan or “help”?";
+    case "video":
+      return "📹 One thing first — have they been willing to do a spontaneous live video call (not scheduled or pre-recorded)?";
+    case "offplatform":
+      return "📱 Quick check — did they push to move the chat off the dating app early, like to WhatsApp or Telegram?";
+  }
+}
+
+export function followUpMessage(): string {
+  return "👀 Anything else they’ve said or asked that felt off? Send it and I’ll factor it into the read.";
 }
 
 export function formatVerdict(verdict: Verdict): string {
@@ -46,7 +68,7 @@ export function formatVerdict(verdict: Verdict): string {
     "",
     verdict.disclaimer,
     "",
-    "Reply SCAM, SAFE, or UNSURE later — your report helps improve detection without storing victim PII.",
+    "Reply SCAM, SAFE, or UNSURE later to tell me how it turned out — it helps me improve, and I don’t save anyone’s personal info.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -90,16 +112,18 @@ export function outOfScopeMessage(): string {
 
 export function askForMoreMessage(): string {
   return [
-    "I need a little more to give a useful verdict.",
+    "I need a bit more to give you a useful rating.",
     "",
-    "Paste 10-30 lines of the conversation, send a chat screenshot, or include whether money/video calls/travel were mentioned.",
+    "Send a screenshot of the chat, or copy-paste 10+ of their messages.",
+    "",
+    "Helpful: did they ask for money, avoid a live video call, or push to move off the app?",
   ].join("\n");
 }
 
 export function imageNeedsVisionMessage(): string {
   return [
-    "I received the image.",
+    "📷 I got your image but couldn’t read it this time.",
     "",
-    "For full screenshot/photo analysis, wire `OPENAI_API_KEY` and set `ENABLE_OPENAI_ANALYSIS=true`. For now, paste the chat text too and I can assess the behavior signals.",
+    "Please copy-paste the chat text instead and I’ll check it for scam warning signs.",
   ].join("\n");
 }
