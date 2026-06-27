@@ -15,6 +15,9 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# Publishes the hand-built static marketing site in ./site directly to GitHub
+# Pages (no framework build step). The site uses relative links so it works
+# under the project-pages subpath (/veritas-relationship-intelligence/).
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,30 +25,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build static site
-        run: npm run build
-        env:
-          GITHUB_PAGES: "true"
-          NEXT_PUBLIC_BASE_PATH: /veritas-relationship-intelligence
-          NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/veritas-relationship-intelligence
-          NEXT_PUBLIC_INTAKE_EMAIL: ${{ vars.NEXT_PUBLIC_INTAKE_EMAIL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: site
 
   deploy:
     environment:
