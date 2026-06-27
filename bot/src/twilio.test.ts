@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { planTwilioResponse, sendTwilioWhatsApp } from "./twilio.js";
+import { hydrateTwilioImage, planTwilioResponse, sendTwilioWhatsApp } from "./twilio.js";
 import type { BotConfig } from "./config.js";
+import type { BotMessage } from "./types.js";
 
 function paramsFrom(obj: Record<string, string>): URLSearchParams {
   return new URLSearchParams(obj);
@@ -78,6 +79,40 @@ function paramsFrom(obj: Record<string, string>): URLSearchParams {
   const errConfig = { twilio: { accountSid: "ACtest", authToken: "tok", apiBase: `http://127.0.0.1:${errPort}` } } as unknown as BotConfig;
   await assert.rejects(() => sendTwilioWhatsApp(errConfig, "whatsapp:+1", "whatsapp:+2", "x"), /Twilio send failed: 401/);
   errStub.close();
+
+  // --- hydrateTwilioImage: downloads media with Basic auth and sets dataUrl ---
+  let mediaAuth: string | undefined;
+  const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  const mediaStub = createServer((req, res) => {
+    mediaAuth = req.headers.authorization;
+    res.writeHead(200, { "content-type": "image/png" });
+    res.end(pngBytes);
+  });
+  await new Promise<void>((resolve) => mediaStub.listen(0, "127.0.0.1", () => resolve()));
+  const mediaPort = (mediaStub.address() as AddressInfo).port;
+  const mediaConfig = { twilio: { accountSid: "ACtest", authToken: "tok", apiBase: "http://unused" } } as unknown as BotConfig;
+
+  const hydrated = await hydrateTwilioImage(mediaConfig, {
+    provider: "twilio", from: "whatsapp:+1", timestamp: 0,
+    image: { url: `http://127.0.0.1:${mediaPort}/media/abc`, mimeType: "image/jpeg" },
+  });
+  mediaStub.close();
+  assert.equal(mediaAuth, `Basic ${Buffer.from("ACtest:tok").toString("base64")}`);
+  assert.equal(hydrated.image?.mimeType, "image/png");
+  assert.equal(hydrated.image?.dataUrl, `data:image/png;base64,${pngBytes.toString("base64")}`);
+
+  // no-op: no image url returns the same object unchanged
+  const noUrl = { provider: "twilio", from: "x", timestamp: 0, text: "hi" } as BotMessage;
+  assert.equal(await hydrateTwilioImage(mediaConfig, noUrl), noUrl);
+
+  // no-op: missing creds returns the same object unchanged (no fetch)
+  const noCredsImg = { provider: "twilio", from: "x", timestamp: 0, image: { url: "http://127.0.0.1:1/x" } } as BotMessage;
+  const noCredsCfg = { twilio: { accountSid: undefined, authToken: undefined, apiBase: "x" } } as unknown as BotConfig;
+  assert.equal(await hydrateTwilioImage(noCredsCfg, noCredsImg), noCredsImg);
+
+  // no-op: already hydrated is left untouched
+  const already = { provider: "twilio", from: "x", timestamp: 0, image: { url: "http://x", dataUrl: "data:image/png;base64,AAAA" } } as BotMessage;
+  assert.equal((await hydrateTwilioImage(mediaConfig, already)).image?.dataUrl, "data:image/png;base64,AAAA");
 
   console.log("twilio.test passed");
 })();

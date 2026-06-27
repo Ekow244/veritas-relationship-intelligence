@@ -39,6 +39,12 @@ export class SessionStore {
     session.updatedAt = Date.now();
   }
 
+  markClarifierAsked(userRef: string): void {
+    const session = this.get(userRef);
+    session.clarifierAsked = true;
+    session.updatedAt = Date.now();
+  }
+
   setVerdict(userRef: string, verdict: Verdict): void {
     const session = this.get(userRef);
     session.lastVerdict = verdict;

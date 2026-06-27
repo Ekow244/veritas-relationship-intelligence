@@ -39,6 +39,7 @@ export type Session = {
   startedAt: number;
   updatedAt: number;
   greeted: boolean;
+  clarifierAsked?: boolean;
   inputs: SessionInput[];
   lastVerdict?: Verdict;
 };
