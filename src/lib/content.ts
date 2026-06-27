@@ -1,11 +1,14 @@
 import {
   BadgeCheck,
+  Camera,
   ClipboardCheck,
   FileCheck2,
   Fingerprint,
+  Gauge,
   HeartHandshake,
   Landmark,
   LockKeyhole,
+  MessageCircle,
   MessageCircleWarning,
   Scale,
   ShieldCheck,
@@ -180,6 +183,37 @@ export const faqs: FAQItem[] = [
     question: "Who is this for?",
     answer:
       "People in online dating, long-distance relationships, pre-marriage situations, post-betrayal confusion, or situations where something does not feel consistent.",
+  },
+  {
+    question: "Is the WhatsApp check really free?",
+    answer:
+      "Yes. The instant WhatsApp check is free and private — we do not store your chats or photos. The in-depth human report is the paid option for when you want deeper verification.",
+  },
+  {
+    question: "What is the difference between the WhatsApp bot and the report?",
+    answer:
+      "The WhatsApp bot gives an instant, automated read of romance-scam warning signs in the messages or photos you send. The in-depth report is a human OSINT review — identity checks, reverse-image and footprint research, and a documented PDF with sources and recommended next steps.",
+  },
+];
+
+export const botSteps: IconContent[] = [
+  {
+    title: "Message Veritas on WhatsApp",
+    description:
+      "Tap the button and say hello. No app to install and no account to create.",
+    icon: MessageCircle,
+  },
+  {
+    title: "Send the chat, a screenshot, or their photo",
+    description:
+      "Paste the messages they sent you, share a screenshot, or send their profile picture.",
+    icon: Camera,
+  },
+  {
+    title: "Get an instant risk read",
+    description:
+      "Veritas replies in seconds with a 🟢 / 🟠 / 🔴 rating and the warning signs it found — privately.",
+    icon: Gauge,
   },
 ];
 

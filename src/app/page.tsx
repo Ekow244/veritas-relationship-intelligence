@@ -9,13 +9,15 @@ import {
 } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { SectionHeading } from "@/components/SectionHeading";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
+  botSteps,
   ethicsCards,
   faqs,
   pricingTiers,
   processSteps,
   services,
-  trustBadges,
+  whatsappHref,
 } from "@/lib/content";
 
 const assetBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
@@ -27,7 +29,7 @@ export default function Home() {
 
       <section
         id="hero"
-        className="relative isolate min-h-[78svh] overflow-hidden border-b border-white/10"
+        className="relative isolate min-h-[82svh] overflow-hidden border-b border-white/10"
       >
         <Image
           src={`${assetBasePath}/images/veritas-hero.png`}
@@ -35,53 +37,132 @@ export default function Home() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center opacity-70"
+          className="animate-hero-pan object-cover object-center opacity-60"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(13,15,13,0.97)_0%,rgba(13,15,13,0.84)_38%,rgba(13,15,13,0.3)_74%,rgba(13,15,13,0.7)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,15,13,0.2),rgba(13,15,13,0.8))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(13,15,13,0.97)_0%,rgba(13,15,13,0.86)_44%,rgba(13,15,13,0.45)_78%,rgba(13,15,13,0.78)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,15,13,0.25),rgba(13,15,13,0.82))]" />
 
-        <div className="relative mx-auto flex max-w-7xl px-5 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+        <div className="relative mx-auto flex min-h-[82svh] max-w-7xl items-center px-5 py-24 sm:px-6 lg:px-8">
           <div className="animate-rise-in max-w-3xl">
-            <p className="inline-flex items-center gap-2 rounded-lg border border-amber-200/20 bg-amber-100/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-amber-100">
+            <p className="inline-flex items-center gap-2 rounded-lg border border-[#25D366]/30 bg-[#25D366]/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#9ff3bd]">
               <ShieldCheck aria-hidden="true" className="size-4" />
-              Ethical relationship intelligence
+              Free instant check on WhatsApp
             </p>
             <h1 className="mt-8 max-w-3xl text-5xl font-semibold tracking-tight text-stone-50 sm:text-6xl lg:text-7xl">
-              Trust your heart.{" "}
+              Is the person you met online{" "}
               <span className="font-display italic text-amber-100">
-                Verify the facts.
+                really who they say they are?
               </span>
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-stone-200 sm:text-xl">
-              Discreet relationship intelligence for people who need clarity
-              before they commit, confront, or walk away.
+              Send the chat to Veritas on WhatsApp for an instant, private read
+              on romance-scam risk — free.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/intake"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-200 px-5 py-3.5 text-sm font-semibold text-stone-950 shadow-[0_24px_70px_rgba(245,184,91,0.22)] transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-[#0d0f0d]"
-              >
-                Start Confidential Review
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
+              <WhatsAppButton label="Check them on WhatsApp" />
               <a
-                href="#services"
+                href="#report"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-semibold text-stone-50 transition hover:border-amber-200/40 hover:bg-white/12 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-[#0d0f0d]"
               >
-                View Services
+                Get an in-depth report
+                <ArrowRight aria-hidden="true" className="size-4" />
               </a>
             </div>
-            <ul className="mt-10 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
-              {trustBadges.map((badge) => (
-                <li
-                  key={badge}
-                  className="flex items-center gap-2 text-sm text-stone-300"
-                >
-                  <Check aria-hidden="true" className="size-4 text-amber-200" />
-                  {badge}
-                </li>
-              ))}
+            <ul className="mt-10 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+              {["Free instant check", "Private — chats aren't stored", "No hacking, no stalking"].map(
+                (badge) => (
+                  <li key={badge} className="flex items-center gap-2 text-sm text-stone-300">
+                    <Check aria-hidden="true" className="size-4 text-[#25D366]" />
+                    {badge}
+                  </li>
+                ),
+              )}
             </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="border-b border-white/10 bg-[#11130f]">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="The free check"
+            title="Clarity in three messages."
+            description="No app, no account. Just message Veritas on WhatsApp."
+            align="center"
+          />
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            {botSteps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <article
+                  key={step.title}
+                  className="relative rounded-lg border border-white/10 bg-white/[0.045] p-7"
+                >
+                  <span className="text-sm font-semibold text-[#25D366]">0{index + 1}</span>
+                  <div className="mt-5 grid size-12 place-items-center rounded-lg border border-[#25D366]/20 bg-[#25D366]/10 text-[#9ff3bd]">
+                    <Icon aria-hidden="true" className="size-5" />
+                  </div>
+                  <h3 className="mt-7 text-xl font-semibold text-stone-50">{step.title}</h3>
+                  <p className="mt-4 text-sm leading-7 text-stone-300">{step.description}</p>
+                </article>
+              );
+            })}
+          </div>
+          <div className="mt-10 flex justify-center">
+            <WhatsAppButton label="Start the free check" />
+          </div>
+        </div>
+      </section>
+
+      <section id="two-ways" className="bg-[#0d0f0d]">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="Two ways to get clarity"
+            title="Start free. Go deeper when it matters."
+            align="center"
+          />
+          <div className="mt-12 grid gap-5 lg:grid-cols-2">
+            <article className="flex flex-col rounded-lg border border-[#25D366]/30 bg-[#25D366]/[0.06] p-7">
+              <h3 className="text-xl font-semibold text-stone-50">Instant WhatsApp check</h3>
+              <p className="mt-2 text-3xl font-semibold tracking-tight text-[#9ff3bd]">Free</p>
+              <ul className="mt-6 grid flex-1 gap-3">
+                {[
+                  "Paste a chat, screenshot, or profile photo",
+                  "Instant romance-scam risk rating with reasons",
+                  "Private — your chats and photos aren't stored",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-sm text-stone-300">
+                    <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#25D366]" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <WhatsAppButton label="Check them on WhatsApp" className="mt-8 w-full" />
+            </article>
+
+            <article className="flex flex-col rounded-lg border border-amber-200/45 bg-amber-100/[0.09] p-7 shadow-[0_28px_90px_rgba(245,184,91,0.13)]">
+              <h3 className="text-xl font-semibold text-stone-50">In-depth human report</h3>
+              <p className="mt-2 text-3xl font-semibold tracking-tight text-amber-100">From $149</p>
+              <ul className="mt-6 grid flex-1 gap-3">
+                {[
+                  "Human OSINT review of identity and footprint",
+                  "Reverse-image and timeline-inconsistency checks",
+                  "Documented PDF report with sources and next steps",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-sm text-stone-300">
+                    <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-200" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="#report"
+                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-200 px-5 py-3 text-sm font-semibold text-stone-950 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-[#0d0f0d]"
+              >
+                Request a report
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </a>
+            </article>
           </div>
         </div>
       </section>
@@ -399,6 +480,14 @@ export default function Home() {
             </p>
           </div>
           <div className="flex flex-wrap gap-5">
+            <a
+              href={whatsappHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#9ff3bd] hover:text-[#25D366]"
+            >
+              WhatsApp
+            </a>
             <a href="#services" className="hover:text-amber-200">
               Services
             </a>
