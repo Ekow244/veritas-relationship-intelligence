@@ -79,9 +79,12 @@ function mergeSignals(a: Signal[], b: Signal[]): Signal[] {
 function riskFromScore(score: number, signals: Signal[]): RiskLevel {
   const hasMoney = signals.some((signal) => signal.type === "money_request" && signal.confidence >= 0.7);
   const hasPhoto = signals.some((signal) => ["ai_generated_photo", "reused_photo", "deepfake_or_faceswap"].includes(signal.type) && signal.confidence >= 0.7);
+  // Medium-and-high-tier taxonomy rules carry weight >= 1.0; low-tier "soft" rules are below it.
+  // A single substantive red flag should never read as LOW (unless balancing context cancels it out).
+  const hasSubstantiveSignal = signals.some((signal) => signal.weight >= 1.0);
 
-  if (score >= 5.2 || (hasMoney && score >= 3.3) || (hasPhoto && score >= 3.8)) return "high";
-  if (score >= 2.2) return "medium";
+  if (score >= 5.2 || (hasMoney && score >= 3.0) || (hasPhoto && score >= 3.8)) return "high";
+  if (score >= 2.2 || (hasSubstantiveSignal && score >= 0.8)) return "medium";
   return "low";
 }
 

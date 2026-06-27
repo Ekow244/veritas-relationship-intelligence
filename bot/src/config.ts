@@ -56,7 +56,7 @@ export function getConfig(): BotConfig {
     },
     openai: {
       apiKey: env("OPENAI_API_KEY"),
-      model: env("OPENAI_MODEL") ?? "gpt-5.5",
+      model: env("OPENAI_MODEL") ?? "gpt-4o-mini",
       enabled: env("ENABLE_OPENAI_ANALYSIS") === "true",
     },
   };
