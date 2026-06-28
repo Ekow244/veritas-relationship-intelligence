@@ -44,6 +44,7 @@ export type Session = {
   updatedAt: number;
   greeted: boolean;
   clarifierAsked?: boolean;
+  stage?: "awaiting_screening" | "verdict_done";
   inputs: SessionInput[];
   lastVerdict?: Verdict;
 };

@@ -16,7 +16,7 @@ import {
   reportThanksMessage,
   scopeRefusalMessage,
 } from "./formatter.js";
-import type { BotMessage, InputKind, SessionInput, StoredCase, StoredReport } from "./types.js";
+import type { BotMessage, InputKind, Session, SessionInput, StoredCase, StoredReport } from "./types.js";
 import type { DataStore } from "./storage.js";
 import type { SessionStore } from "./session-store.js";
 import { hashUser, makeId, nowIso } from "./utils.js";
@@ -68,7 +68,20 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   if (kind === "greeting") return [greetingMessage()];
 
   const input = toSessionInput(kind, message);
-  const updated = runtime.sessions.addInput(userRef, input);
+  const hasImage = Boolean(message.images?.some((i) => i.dataUrl) || message.image?.dataUrl);
+  const shortText = (message.text ?? "").trim().length <= 60 && !/\n/.test(message.text ?? "");
+
+  let updated: Session;
+  if (session.stage === "awaiting_screening") {
+    // the screening answer continues the current case
+    updated = runtime.sessions.addInput(userRef, input);
+  } else if (session.stage === "verdict_done" && shortText && !hasImage) {
+    // a short follow-up augments the just-finished case
+    updated = runtime.sessions.addInput(userRef, input);
+  } else {
+    // new primary submission (or first message) = fresh case
+    updated = runtime.sessions.startCase(userRef, input);
+  }
 
   if (kind === "image" && !runtime.config.openai.enabled && !message.image?.dataUrl) {
     return [imageNeedsVisionMessage()];
@@ -90,6 +103,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   const infoRich = imageReady || (haveMoney && (haveVideo || haveOffApp));
   if (!session.clarifierAsked && !infoRich) {
     runtime.sessions.markClarifierAsked(userRef);
+    runtime.sessions.setStage(userRef, "awaiting_screening");
     const missing = !haveMoney ? "money" : !haveVideo ? "video" : "offplatform";
     return [clarifyQuestion(missing)];
   }
@@ -122,6 +136,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     },
   };
   await runtime.data.appendCase(storedCase);
+  runtime.sessions.setStage(userRef, "verdict_done");
 
   return [formatVerdict(verdict), followUpMessage()];
 }

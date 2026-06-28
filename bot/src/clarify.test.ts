@@ -3,6 +3,7 @@ import { getConfig } from "./config.js";
 import { processIncomingMessage } from "./bot.js";
 import { SessionStore } from "./session-store.js";
 import { DataStore } from "./storage.js";
+import { hashUser } from "./utils.js";
 import type { BotMessage } from "./types.js";
 
 const config = { ...getConfig(), dataDir: "/tmp/veritas-bot-clarify" };
@@ -10,6 +11,10 @@ const runtime = { config, sessions: new SessionStore(config.sessionTtlMs), data:
 
 function send(from: string, fields: Partial<BotMessage>): Promise<string[]> {
   return processIncomingMessage(runtime, { provider: "simulator", from, timestamp: Date.now(), ...fields });
+}
+
+function userRefFor(from: string): string {
+  return hashUser(from, config.userHashSalt);
 }
 
 (async () => {
@@ -34,6 +39,15 @@ function send(from: string, fields: Partial<BotMessage>): Promise<string[]> {
   const img = await send("+c3", { image: { dataUrl: "data:image/png;base64,iVBORw0KGgo=", mimeType: "image/png", caption: "is he real?" } });
   assert.equal(img.length, 2, "image message should go straight to verdict + follow-up");
   assert.ok(img[0].includes("Veritas verdict"), "image first reply should be the verdict");
+
+  // 5. Case isolation — case B must not inherit case A (regression for the "both individuals" bug).
+  await send("+iso", { text: "David is an oil rig engineer and asked me for 800 dollars in iTunes gift cards" });
+  await send("+iso", { text: "yes" }); // answer the screening question -> verdict for case A
+  await send("+iso", { text: "Marcus is a military surgeon in Syria who needs 1275 dollars in Steam gift cards" });
+  const sess = runtime.sessions.get(userRefFor("+iso"));
+  const caseText = sess.inputs.filter((i) => i.text).map((i) => i.text).join(" ");
+  assert.ok(caseText.includes("Marcus"), "current case should contain the new submission");
+  assert.ok(!caseText.includes("David"), "current case must NOT contain the prior unrelated case");
 
   console.log("clarify.test passed");
 })();
