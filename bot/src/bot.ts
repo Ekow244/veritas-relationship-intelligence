@@ -12,6 +12,7 @@ import {
   formatVerdict,
   greetingMessage,
   imageNeedsVisionMessage,
+  imageUnreadableMessage,
   outOfScopeMessage,
   reportThanksMessage,
   scopeRefusalMessage,
@@ -81,6 +82,12 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   } else {
     // new primary submission (or first message) = fresh case
     updated = runtime.sessions.startCase(userRef, input);
+  }
+
+  const inboundImages = message.images ?? (message.image ? [message.image] : []);
+  const anyImageHydrated = inboundImages.some((img) => img.dataUrl);
+  if (inboundImages.length && !anyImageHydrated && !(message.text ?? "").trim()) {
+    return [imageUnreadableMessage()];
   }
 
   if (kind === "image" && !runtime.config.openai.enabled && !message.image?.dataUrl) {
@@ -163,6 +170,7 @@ function toSessionInput(kind: InputKind, message: BotMessage): SessionInput {
     kind,
     text: message.text ?? message.image?.caption,
     image: message.image,
+    images: message.images,
     receivedAt: Date.now(),
   };
 }

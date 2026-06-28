@@ -120,6 +120,10 @@ export function askForMoreMessage(): string {
   ].join("\n");
 }
 
+export function imageUnreadableMessage(): string {
+  return "📷 I couldn’t open that image — please try resending it as a photo.";
+}
+
 export function imageNeedsVisionMessage(): string {
   return [
     "📷 I got your image but couldn’t read it this time.",

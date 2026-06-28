@@ -41,23 +41,20 @@ const signalWeights: Record<string, number> = {
   deepfake_or_faceswap: 2.6,
 };
 
+export function buildContent(text: string | undefined, imageDataUrls: string[]): Array<Record<string, unknown>> {
+  const content: Array<Record<string, unknown>> = [];
+  if (text) content.push({ type: "input_text", text });
+  for (const url of imageDataUrls) content.push({ type: "input_image", image_url: url });
+  return content;
+}
+
 export async function analyzeWithOpenAI(
   config: BotConfig,
-  input: { text?: string; imageDataUrl?: string },
+  input: { text?: string; imageDataUrls?: string[] },
 ): Promise<{ signals: Signal[]; balancingSignals: string[]; explanation?: string; nextSteps?: string[] } | undefined> {
   if (!config.openai.enabled || !config.openai.apiKey) return undefined;
 
-  const content: Array<Record<string, unknown>> = [];
-  if (input.text) {
-    content.push({ type: "input_text", text: input.text });
-  }
-  if (input.imageDataUrl) {
-    content.push({
-      type: "input_image",
-      image_url: input.imageDataUrl,
-    });
-  }
-
+  const content = buildContent(input.text, input.imageDataUrls ?? []);
   if (content.length === 0) return undefined;
 
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -133,6 +130,7 @@ Red-flag taxonomy:
 - Balancing: willing spontaneous video, no money dynamic, consistent verifiable details, comfortable involving friends/family.
 
 For screenshots, read the visible chat first, then analyze it. If the image is a profile photo rather than chat screenshot, only emit image-related signals when visible evidence supports it and otherwise say what could not be checked.
+If the image is a single profile photo rather than a chat screenshot, describe what is visible and only flag generic signals with visible evidence (stock-photo/model look, military or uniform prop, watermark, mismatched styling). Do not claim reverse-image-search results — that capability is not available.
 `;
 
 const analysisSchema = {
