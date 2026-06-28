@@ -1,12 +1,18 @@
-import type { BotMessage, InputKind } from "./types.js";
+import type { BotMessage, ImageRef, InputKind } from "./types.js";
 import { escapeXml } from "./utils.js";
 import type { BotConfig } from "./config.js";
 
 export function parseTwilioMessage(params: URLSearchParams): BotMessage {
-  const mediaUrl = params.get("MediaUrl0") ?? undefined;
-  const mediaType = params.get("MediaContentType0") ?? undefined;
   const body = params.get("Body") ?? undefined;
   const from = params.get("From")?.replace(/^whatsapp:/, "") ?? "unknown";
+  const numMedia = Number.parseInt(params.get("NumMedia") ?? "0", 10) || 0;
+
+  const images: ImageRef[] = [];
+  for (let i = 0; i < numMedia; i++) {
+    const url = params.get(`MediaUrl${i}`);
+    if (!url) continue;
+    images.push({ url, mimeType: params.get(`MediaContentType${i}`) ?? undefined, caption: body });
+  }
 
   return {
     provider: "twilio",
@@ -14,13 +20,8 @@ export function parseTwilioMessage(params: URLSearchParams): BotMessage {
     id: params.get("SmsMessageSid") ?? undefined,
     timestamp: Date.now(),
     text: body,
-    image: mediaUrl
-      ? {
-          url: mediaUrl,
-          mimeType: mediaType,
-          caption: body,
-        }
-      : undefined,
+    image: images[0],
+    images: images.length ? images : undefined,
   };
 }
 
@@ -48,31 +49,28 @@ export function planTwilioResponse(
   return { mode: "sync" };
 }
 
-export async function hydrateTwilioImage(config: BotConfig, message: BotMessage): Promise<BotMessage> {
-  const mediaUrl = message.image?.url;
-  if (!mediaUrl || message.image?.dataUrl) return message;
+export async function hydrateTwilioImages(config: BotConfig, message: BotMessage): Promise<BotMessage> {
+  const images = message.images ?? (message.image ? [message.image] : []);
+  if (!images.length) return message;
 
   const { accountSid, authToken } = config.twilio;
   if (!accountSid || !authToken) return message;
-
   const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
-  const response = await fetch(mediaUrl, {
-    headers: { authorization: `Basic ${auth}` },
-  });
-  if (!response.ok) return message;
 
-  const contentType = response.headers.get("content-type") ?? message.image?.mimeType ?? "image/jpeg";
-  const bytes = Buffer.from(await response.arrayBuffer());
-  const base64 = bytes.toString("base64");
+  const hydrated = await Promise.all(images.map(async (img) => {
+    if (!img.url || img.dataUrl) return img;
+    try {
+      const res = await fetch(img.url, { headers: { authorization: `Basic ${auth}` } });
+      if (!res.ok) return img;
+      const contentType = res.headers.get("content-type") ?? img.mimeType ?? "image/jpeg";
+      const base64 = Buffer.from(await res.arrayBuffer()).toString("base64");
+      return { ...img, mimeType: contentType, dataUrl: `data:${contentType};base64,${base64}` };
+    } catch {
+      return img;
+    }
+  }));
 
-  return {
-    ...message,
-    image: {
-      ...message.image,
-      mimeType: contentType,
-      dataUrl: `data:${contentType};base64,${base64}`,
-    },
-  };
+  return { ...message, images: hydrated, image: hydrated[0] };
 }
 
 export async function sendTwilioWhatsApp(

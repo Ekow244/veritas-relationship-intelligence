@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { hydrateTwilioImage, planTwilioResponse, sendTwilioWhatsApp } from "./twilio.js";
+import { hydrateTwilioImages, parseTwilioMessage, planTwilioResponse, sendTwilioWhatsApp } from "./twilio.js";
 import type { BotConfig } from "./config.js";
 import type { BotMessage } from "./types.js";
 
@@ -92,7 +92,7 @@ function paramsFrom(obj: Record<string, string>): URLSearchParams {
   const mediaPort = (mediaStub.address() as AddressInfo).port;
   const mediaConfig = { twilio: { accountSid: "ACtest", authToken: "tok", apiBase: "http://unused" } } as unknown as BotConfig;
 
-  const hydrated = await hydrateTwilioImage(mediaConfig, {
+  const hydrated = await hydrateTwilioImages(mediaConfig, {
     provider: "twilio", from: "whatsapp:+1", timestamp: 0,
     image: { url: `http://127.0.0.1:${mediaPort}/media/abc`, mimeType: "image/jpeg" },
   });
@@ -103,16 +103,45 @@ function paramsFrom(obj: Record<string, string>): URLSearchParams {
 
   // no-op: no image url returns the same object unchanged
   const noUrl = { provider: "twilio", from: "x", timestamp: 0, text: "hi" } as BotMessage;
-  assert.equal(await hydrateTwilioImage(mediaConfig, noUrl), noUrl);
+  assert.equal(await hydrateTwilioImages(mediaConfig, noUrl), noUrl);
 
   // no-op: missing creds returns the same object unchanged (no fetch)
   const noCredsImg = { provider: "twilio", from: "x", timestamp: 0, image: { url: "http://127.0.0.1:1/x" } } as BotMessage;
   const noCredsCfg = { twilio: { accountSid: undefined, authToken: undefined, apiBase: "x" } } as unknown as BotConfig;
-  assert.equal(await hydrateTwilioImage(noCredsCfg, noCredsImg), noCredsImg);
+  assert.equal(await hydrateTwilioImages(noCredsCfg, noCredsImg), noCredsImg);
 
   // no-op: already hydrated is left untouched
   const already = { provider: "twilio", from: "x", timestamp: 0, image: { url: "http://x", dataUrl: "data:image/png;base64,AAAA" } } as BotMessage;
-  assert.equal((await hydrateTwilioImage(mediaConfig, already)).image?.dataUrl, "data:image/png;base64,AAAA");
+  assert.equal((await hydrateTwilioImages(mediaConfig, already)).image?.dataUrl, "data:image/png;base64,AAAA");
+
+  // --- parseTwilioMessage reads NumMedia into images[] ---
+  const media2 = parseTwilioMessage(new URLSearchParams({
+    From: "whatsapp:+1", To: "whatsapp:+2", Body: "look at these", NumMedia: "2",
+    MediaUrl0: "http://m/0", MediaContentType0: "image/jpeg",
+    MediaUrl1: "http://m/1", MediaContentType1: "image/png",
+  }));
+  assert.equal(media2.images?.length, 2);
+  assert.equal(media2.images?.[0].url, "http://m/0");
+  assert.equal(media2.images?.[1].mimeType, "image/png");
+  assert.equal(media2.images?.[0].caption, "look at these");
+
+  // text-only message has no images
+  const textOnly = parseTwilioMessage(new URLSearchParams({ From: "whatsapp:+1", To: "whatsapp:+2", Body: "hi" }));
+  assert.equal(textOnly.images, undefined);
+
+  // --- hydrateTwilioImages downloads each url with Basic auth ---
+  let mediaCalls = 0;
+  const seenAuth: Array<string | undefined> = [];
+  const mStub = createServer((req, res) => { mediaCalls++; seenAuth.push(req.headers.authorization); res.writeHead(200, { "content-type": "image/png" }); res.end(Buffer.from([0x89, 0x50])); });
+  await new Promise<void>((r) => mStub.listen(0, "127.0.0.1", () => r()));
+  const mPort = (mStub.address() as AddressInfo).port;
+  const mCfg = { twilio: { accountSid: "ACx", authToken: "tok", apiBase: "http://x" } } as unknown as BotConfig;
+  const hy = await hydrateTwilioImages(mCfg, { provider: "twilio", from: "x", timestamp: 0, images: [{ url: `http://127.0.0.1:${mPort}/a` }, { url: `http://127.0.0.1:${mPort}/b` }] });
+  mStub.close();
+  assert.equal(mediaCalls, 2);
+  assert.equal(seenAuth[0], `Basic ${Buffer.from("ACx:tok").toString("base64")}`);
+  assert.ok(hy.images?.[0].dataUrl?.startsWith("data:image/png;base64,"));
+  assert.ok(hy.images?.[1].dataUrl?.startsWith("data:image/png;base64,"));
 
   console.log("twilio.test passed");
 })();

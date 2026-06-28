@@ -4,7 +4,7 @@ import { getConfig } from "./config.js";
 import { processIncomingMessage, processMetaMessageForWhatsApp } from "./bot.js";
 import { SessionStore } from "./session-store.js";
 import { DataStore } from "./storage.js";
-import { hydrateTwilioImage, parseTwilioMessage, planTwilioResponse, sendTwilioWhatsApp, twimlMessage } from "./twilio.js";
+import { hydrateTwilioImages, parseTwilioMessage, planTwilioResponse, sendTwilioWhatsApp, twimlMessage } from "./twilio.js";
 import { classifyMessage } from "./classifier.js";
 import { analyzingMessage } from "./formatter.js";
 import { hydrateMetaImage, parseMetaWebhook, sendWhatsAppText } from "./whatsapp-cloud.js";
@@ -93,7 +93,7 @@ const server = createServer(async (req, res) => {
 
       if (plan.mode === "async") {
         textResponse(res, 200, twimlMessage(analyzingMessage()), "text/xml; charset=utf-8");
-        void hydrateTwilioImage(config, message)
+        void hydrateTwilioImages(config, message)
           .then((hydrated) => processIncomingMessage(runtime, hydrated))
           .then((replies) => Promise.all(
             replies.map((reply) => sendTwilioWhatsApp(config, plan.channelTo, plan.channelFrom, reply)),
