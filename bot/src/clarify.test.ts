@@ -54,5 +54,19 @@ function userRefFor(from: string): string {
   const lo2 = await send("+benign", { text: "no" });
   assert.ok(!lo2.some((m) => m.includes("reportfraud.ftc.gov")), "low-risk verdict must not include action steps");
 
+  // 7. Free-text screening answer (full sentence) advances to a verdict.
+  await send("+ft", { text: "I matched with a guy and we have been chatting" }); // -> screening question
+  const ftVerdict = await send("+ft", { text: "yes, he asked me for iTunes gift cards" });
+  assert.ok(ftVerdict.some((m) => m.includes("Veritas verdict")), "a full-sentence answer must advance to a verdict");
+
+  // 8. Risk label is rendered from a fixed template (enum-cased, never model free-text).
+  assert.ok(/Veritas verdict: (LOW|MEDIUM|HIGH) risk/.test(ftVerdict[0]), "verdict header must be templated");
+
+  // 9. DELETE clears the session and confirms.
+  const del = await send("+ft", { text: "DELETE" });
+  assert.ok(del[0].toLowerCase().includes("deleted"), "DELETE should confirm removal");
+  const after = runtime.sessions.get(userRefFor("+ft"));
+  assert.equal(after.inputs.length, 0, "session inputs should be cleared after DELETE");
+
   console.log("clarify.test passed");
 })();
