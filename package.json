@@ -8,7 +8,7 @@
     "start": "next start",
     "bot:build": "tsc -p bot/tsconfig.json",
     "bot:start": "node bot/dist/index.js",
-    "bot:test": "npm run bot:build && node bot/dist/config.test.js && node bot/dist/twilio.test.js && node bot/dist/openai-analyzer.test.js && node bot/dist/clarify.test.js && node bot/dist/smoke-test.js"
+    "bot:test": "npm run bot:build && node bot/dist/config.test.js && node bot/dist/twilio.test.js && node bot/dist/openai-analyzer.test.js && node bot/dist/taxonomy.test.js && node bot/dist/clarify.test.js && node bot/dist/smoke-test.js"
   },
   "dependencies": {
     "lucide-react": "latest",

@@ -60,7 +60,7 @@ const mediumWeightRules: TaxonomyRule[] = [
     weight: 1.6,
     confidence: 0.68,
     patterns: [
-      /\b(soulmate|my queen|my king|my wife|my husband|i love you|marry you|destiny|meant to be)\b/i,
+      /\b(soulmate|my queen|my king|i love you|marry you|destiny|meant to be|my love|my darling)\b/i,
       /\b(love|loves|loving).{0,30}\b(me|you)\b/i,
       /\b(never felt this way|you are the one|spend my life with you)\b/i,
     ],

@@ -131,6 +131,12 @@ Red-flag taxonomy:
 
 For screenshots, read the visible chat first, then analyze it. If the image is a profile photo rather than chat screenshot, only emit image-related signals when visible evidence supports it and otherwise say what could not be checked.
 If the image is a single profile photo rather than a chat screenshot, describe what is visible and only flag generic signals with visible evidence (stock-photo/model look, military or uniform prop, watermark, mismatched styling). Do not claim reverse-image-search results — that capability is not available.
+
+Examples:
+- "I love you, you're my soulmate, send me $300 in Steam cards, my camera is broken" -> HIGH (love_bombing + money request + video avoidance, each with a verbatim quote).
+- "lol when I'm rich I'll buy a GLE for my wife" -> LOW, reasons: [] (joking about a car; "my wife" is not affection toward the user).
+- "Had a good day at work, watched a movie, talked about our families" -> LOW, reasons: [] (ordinary friendly chat).
+Only include a signal when you can quote text that genuinely supports THAT signal. An ordinary, friendly conversation with no signals must be LOW with an empty reasons list.
 `;
 
 const analysisSchema = {
