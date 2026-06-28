@@ -6,7 +6,7 @@ import { SessionStore } from "./session-store.js";
 import { DataStore } from "./storage.js";
 import { hydrateTwilioImages, parseTwilioMessage, planTwilioResponse, sendTwilioWhatsApp, twimlMessage } from "./twilio.js";
 import { classifyMessage } from "./classifier.js";
-import { analyzingMessage } from "./formatter.js";
+import { analyzingMessage, overloadedMessage } from "./formatter.js";
 import { hydrateMetaImage, parseMetaWebhook, sendWhatsAppText } from "./whatsapp-cloud.js";
 import {
   jsonResponse,
@@ -104,6 +104,7 @@ const server = createServer(async (req, res) => {
               event: "twilio_async_processing_failed",
               message: error instanceof Error ? error.message : String(error),
             }));
+            void sendTwilioWhatsApp(config, plan.channelTo, plan.channelFrom, overloadedMessage()).catch(() => {});
           });
         return;
       }

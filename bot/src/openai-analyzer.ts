@@ -57,7 +57,7 @@ export async function analyzeWithOpenAI(
   const content = buildContent(input.text, input.imageDataUrls ?? []);
   if (content.length === 0) return undefined;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const requestInit = {
     method: "POST",
     headers: {
       authorization: `Bearer ${config.openai.apiKey}`,
@@ -81,7 +81,13 @@ export async function analyzeWithOpenAI(
         },
       },
     }),
-  });
+  };
+
+  let response = await fetch("https://api.openai.com/v1/responses", requestInit);
+  if (!response.ok && (response.status === 429 || response.status >= 500)) {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    response = await fetch("https://api.openai.com/v1/responses", requestInit);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
