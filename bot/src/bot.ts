@@ -3,6 +3,7 @@ import { analyzeSession } from "./analyzer.js";
 import { classifyMessage } from "./classifier.js";
 import { detectHeuristicSignals } from "./taxonomy.js";
 import {
+  actionStepsMessage,
   analyzingMessage,
   askForMoreMessage,
   clarifyQuestion,
@@ -145,7 +146,12 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   await runtime.data.appendCase(storedCase);
   runtime.sessions.setStage(userRef, "verdict_done");
 
-  return [formatVerdict(verdict), followUpMessage()];
+  const replies = [formatVerdict(verdict)];
+  if (verdict.riskLevel === "medium" || verdict.riskLevel === "high") {
+    replies.push(actionStepsMessage());
+  }
+  replies.push(followUpMessage());
+  return replies;
 }
 
 export async function processMetaMessageForWhatsApp(

@@ -38,6 +38,23 @@ export function clarifyQuestion(missing: "money" | "video" | "offplatform"): str
   }
 }
 
+export function actionStepsMessage(): string {
+  return [
+    "If this worries you, a few concrete steps:",
+    "",
+    "• Don’t send money, gift cards, or crypto — and don’t send more if you already have.",
+    "• Already sent money? Contact your bank, card issuer, or the gift-card company’s fraud line right away — speed matters for recovery.",
+    "• Report it: FTC reportfraud.ftc.gov · FBI IC3 ic3.gov · UK Action Fraud actionfraud.police.uk.",
+    "• Block and report the account in the app where you met.",
+    "",
+    "None of this is your fault — these scams are built to fool careful people. If you’d like to talk to someone, the AARP Fraud Watch helpline (877-908-3360) can help.",
+  ].join("\n");
+}
+
+export function overloadedMessage(): string {
+  return "⏳ I’m a bit overloaded right now — please resend your message in a minute and I’ll finish your read.";
+}
+
 export function followUpMessage(): string {
   return "👀 Anything else they’ve said or asked that felt off? Send it and I’ll factor it into the read.";
 }
