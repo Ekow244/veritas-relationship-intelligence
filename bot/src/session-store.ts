@@ -45,6 +45,22 @@ export class SessionStore {
     session.updatedAt = Date.now();
   }
 
+  startCase(userRef: string, input: SessionInput): Session {
+    const session = this.get(userRef);
+    session.inputs = [input];
+    session.stage = undefined;
+    session.clarifierAsked = false;
+    session.updatedAt = Date.now();
+    this.sessions.set(userRef, session);
+    return session;
+  }
+
+  setStage(userRef: string, stage: Session["stage"]): void {
+    const session = this.get(userRef);
+    session.stage = stage;
+    session.updatedAt = Date.now();
+  }
+
   setVerdict(userRef: string, verdict: Verdict): void {
     const session = this.get(userRef);
     session.lastVerdict = verdict;

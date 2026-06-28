@@ -10,7 +10,11 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
     .map((input) => input.text)
     .join("\n\n");
 
-  const latestImage = [...session.inputs].reverse().find((input) => input.image?.dataUrl)?.image;
+  const caseImages = session.inputs
+    .flatMap((input) => input.images ?? (input.image ? [input.image] : []))
+    .filter((img) => img.dataUrl);
+  const imageDataUrls = caseImages.map((img) => img.dataUrl as string);
+  const captionText = caseImages.map((img) => img.caption).filter(Boolean).join("\n");
 
   const heuristic = detectHeuristicSignals(text);
   let signals = heuristic.signals;
@@ -20,8 +24,8 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
 
   try {
     const llm = await analyzeWithOpenAI(config, {
-      text: text || latestImage?.caption,
-      imageDataUrl: latestImage?.dataUrl,
+      text: text || captionText || undefined,
+      imageDataUrls,
     });
 
     if (llm) {
@@ -38,7 +42,7 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
     }));
   }
 
-  if (latestImage && !config.openai.enabled) {
+  if (caseImages.length && !config.openai.enabled) {
     signals.push({
       type: "image_received_not_analyzed",
       label: "Image received but not vision-analyzed",

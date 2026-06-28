@@ -12,25 +12,29 @@ export type InputKind =
   | "out_of_scope"
   | "unknown";
 
+export type ImageRef = {
+  id?: string;
+  url?: string;
+  mimeType?: string;
+  caption?: string;
+  dataUrl?: string;
+};
+
 export type BotMessage = {
   provider: "meta" | "twilio" | "simulator";
   from: string;
   id?: string;
   timestamp: number;
   text?: string;
-  image?: {
-    id?: string;
-    url?: string;
-    mimeType?: string;
-    caption?: string;
-    dataUrl?: string;
-  };
+  image?: ImageRef;
+  images?: ImageRef[];
 };
 
 export type SessionInput = {
   kind: InputKind;
   text?: string;
-  image?: BotMessage["image"];
+  image?: ImageRef;
+  images?: ImageRef[];
   receivedAt: number;
 };
 
@@ -40,6 +44,7 @@ export type Session = {
   updatedAt: number;
   greeted: boolean;
   clarifierAsked?: boolean;
+  stage?: "awaiting_screening" | "verdict_done";
   inputs: SessionInput[];
   lastVerdict?: Verdict;
 };
