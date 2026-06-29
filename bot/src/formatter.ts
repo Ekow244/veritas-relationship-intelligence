@@ -75,7 +75,7 @@ export function formatVerdict(verdict: Verdict): string {
     "",
     verdict.disclaimer,
     "",
-    "Reply SCAM, SAFE, or UNSURE later to tell me how it turned out — it helps me improve, and I don’t save anyone’s personal info.",
+    "Reply SCAM, SAFE, or UNSURE later to tell me how it turned out. You can add what happened, like “SCAM - I blocked them and did not send money.”",
   ]
     .filter(Boolean)
     .join("\n");
@@ -85,8 +85,9 @@ export function reportReminderMessage(): string {
   return "🔎 Want a deeper, human investigation — identity and footprint checks with a documented report? You can request one at https://ekow244.github.io/veritas-relationship-intelligence/";
 }
 
-export function reportThanksMessage(outcome: string): string {
-  return `Thanks. I recorded this as ${outcome.toUpperCase()} feedback for the pattern library, not as a public profile on anyone.`;
+export function reportThanksMessage(outcome: string, avertedHarm = false): string {
+  const impact = avertedHarm ? " I also marked it as likely averted harm." : "";
+  return `Thanks. I recorded this as ${outcome.toUpperCase()} feedback for the pattern library, not as a public profile on anyone.${impact}`;
 }
 
 export function deleteConfirmationMessage(removed: { casesRemoved: number; reportsRemoved: number }): string {

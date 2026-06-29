@@ -57,7 +57,9 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       id: makeId("report"),
       caseId: session.lastVerdict?.caseId,
       userRef,
-      reportedOutcome: outcome,
+      reportedOutcome: outcome.reportedOutcome,
+      userAction: outcome.userAction,
+      avertedHarm: outcome.avertedHarm,
       scamIndicators: session.lastVerdict?.signals.map((signal) => signal.type) ?? [],
       consentedToIntel: true,
       createdAt: nowIso(),
@@ -69,10 +71,12 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       type: "report_received",
       metadata: {
         reportedOutcome: report.reportedOutcome,
+        userAction: report.userAction,
+        avertedHarm: report.avertedHarm,
         consentedToIntel: report.consentedToIntel,
       },
     }));
-    return [reportThanksMessage(outcome)];
+    return [reportThanksMessage(report.reportedOutcome, report.avertedHarm)];
   }
 
   if (kind === "scope_violation") return [scopeRefusalMessage()];
@@ -226,9 +230,26 @@ function toSessionInput(kind: InputKind, message: BotMessage): SessionInput {
   };
 }
 
-function normalizeReportOutcome(text: string): "scam" | "safe" | "unsure" {
+function normalizeReportOutcome(text: string): Pick<StoredReport, "reportedOutcome" | "userAction" | "avertedHarm"> {
   const normalized = text.trim().toLowerCase();
-  if (normalized === "scam") return "scam";
-  if (normalized === "safe") return "safe";
-  return "unsure";
+  const reportedOutcome = normalized.startsWith("scam")
+    ? "scam"
+    : normalized.startsWith("safe")
+      ? "safe"
+      : "unsure";
+
+  const userAction = /\b(blocked|block)\b/.test(normalized)
+    ? "blocked"
+    : /\b(stopped|cut contact|no contact|ended|walked away)\b/.test(normalized)
+      ? "stopped_contact"
+      : /\b(sent|paid|transferred|wired)\b/.test(normalized) && !/\b(did not|didn'?t|never|no)\s+(send|pay|transfer|wire)/.test(normalized)
+        ? "sent_money"
+        : /\b(did not|didn'?t|never|no)\s+(send|pay|transfer|wire)|\bnot send\b/.test(normalized)
+          ? "did_not_send"
+          : /\b(reported|filed a report|reportfraud|ic3|bank)\b/.test(normalized)
+            ? "reported"
+            : "unknown";
+
+  const avertedHarm = reportedOutcome === "scam" && ["blocked", "stopped_contact", "did_not_send", "reported"].includes(userAction);
+  return { reportedOutcome, userAction, avertedHarm };
 }
