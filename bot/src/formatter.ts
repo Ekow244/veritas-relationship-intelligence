@@ -55,6 +55,10 @@ export function overloadedMessage(): string {
   return "⏳ I’m a bit overloaded right now — please resend your message in a minute and I’ll finish your read.";
 }
 
+export function rateLimitedMessage(): string {
+  return "⏳ I’ve hit today’s safety limit for checks. Please try again tomorrow, or reply DELETE if you want me to remove your stored derived records.";
+}
+
 export function followUpMessage(): string {
   return "👀 Anything else they’ve said or asked that felt off? Send it and I’ll factor it into the read.";
 }

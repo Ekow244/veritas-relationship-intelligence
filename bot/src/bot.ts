@@ -18,20 +18,24 @@ import {
   outOfScopeMessage,
   reportReminderMessage,
   reportThanksMessage,
+  rateLimitedMessage,
   scopeRefusalMessage,
 } from "./formatter.js";
 import type { BotMessage, InputKind, Session, SessionInput, StoredReport } from "./types.js";
 import type { DataStore } from "./storage.js";
 import type { SessionStore } from "./session-store.js";
+import type { GuardrailStore } from "./guardrails.js";
 import { hashUser, makeId, nowIso } from "./utils.js";
 
 export type BotRuntime = {
   config: BotConfig;
   sessions: SessionStore;
   data: DataStore;
+  guardrails?: GuardrailStore;
 };
 
 export async function processIncomingMessage(runtime: BotRuntime, message: BotMessage): Promise<string[]> {
+  const startedAt = Date.now();
   const userRef = hashUser(message.from, runtime.config.userHashSalt);
   const kind = classifyMessage(message);
   const session = runtime.sessions.get(userRef);
@@ -83,6 +87,17 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   if (kind === "crisis") return [crisisMessage()];
   if (kind === "out_of_scope") return [outOfScopeMessage()];
   if (kind === "greeting") return [greetingMessage()];
+
+  const guardrail = runtime.guardrails?.recordCheck(userRef);
+  if (guardrail && !guardrail.allowed) {
+    console.warn(JSON.stringify({
+      level: "warn",
+      event: "guardrail_limit_hit",
+      reason: guardrail.reason,
+      retryAfterSeconds: guardrail.retryAfterSeconds,
+    }));
+    return [rateLimitedMessage()];
+  }
 
   const input = toSessionInput(kind, message);
   const hasImage = Boolean(message.images?.some((i) => i.dataUrl) || message.image?.dataUrl);
@@ -191,6 +206,17 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       entityCount: detectedEntities.length,
       intelMatchCount: intelMatches.length,
     },
+  }));
+  console.log(JSON.stringify({
+    level: "info",
+    event: "bot_check_completed",
+    caseId: verdict.caseId,
+    riskLevel: verdict.riskLevel,
+    score: verdict.score,
+    latencyMs: Date.now() - startedAt,
+    entityCount: detectedEntities.length,
+    intelMatchCount: intelMatches.length,
+    usage: runtime.guardrails?.snapshot(),
   }));
   runtime.sessions.setStage(userRef, "verdict_done");
 
