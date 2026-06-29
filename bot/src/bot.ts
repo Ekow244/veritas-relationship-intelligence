@@ -179,6 +179,8 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     metadata: {
       riskLevel: verdict.riskLevel,
       score: verdict.score,
+      uncertaintyLevel: verdict.uncertainty.level,
+      requiresHumanReview: verdict.requiresHumanReview,
       signalTypes: verdict.signals.map((signal) => signal.type),
       entityCount: detectedEntities.length,
     },

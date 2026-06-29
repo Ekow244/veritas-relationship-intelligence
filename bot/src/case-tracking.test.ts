@@ -34,10 +34,17 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
   assert.equal(cases[0].inputsSummary[0].kind, "chat_text");
   assert.ok(cases[0].modelVersion, "case should record analysis version");
   assert.ok(cases[0].promptVersion, "case should record prompt version");
+  assert.equal(cases[0].verdict?.uncertainty.level, "low", "info-rich high-risk case should have low uncertainty");
+  assert.equal(cases[0].verdict?.requiresHumanReview, true, "high-risk money cases should be marked for review");
+  assert.ok(cases[0].verdict?.doNotDo.some((item) => /send money/i.test(item)), "verdict should include explicit prohibitions");
 
   assert.ok(events.some((event) => event.type === "case_started"), "case_started event should be recorded");
   assert.ok(events.some((event) => event.type === "input_received"), "input_received event should be recorded");
   assert.ok(events.some((event) => event.type === "verdict_created"), "verdict_created event should be recorded");
+  assert.ok(
+    events.some((event) => event.type === "verdict_created" && event.metadata.requiresHumanReview === true),
+    "verdict event should expose review flag",
+  );
 
   assert.ok(entities.some((entity) => entity.type === "phone_number"), "phone number entity should be detected");
   assert.ok(entities.some((entity) => entity.type === "url"), "URL entity should be detected");

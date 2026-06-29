@@ -62,10 +62,16 @@ export function followUpMessage(): string {
 export function formatVerdict(verdict: Verdict): string {
   // The rating line is code-templated (deterministic). The body is the natural,
   // LLM-authored explanation that weaves the evidence in conversationally.
+  const uncertaintyLine = verdict.uncertainty.level === "low"
+    ? undefined
+    : `Uncertainty: ${verdict.uncertainty.reasons[0] ?? "This is a signal check, not proof."}`;
+
   return [
     `${riskEmoji[verdict.riskLevel]} Veritas verdict: ${verdict.riskLevel.toUpperCase()} risk`,
     "",
     verdict.explanation,
+    uncertaintyLine ? "" : undefined,
+    uncertaintyLine,
     "",
     verdict.disclaimer,
     "",
