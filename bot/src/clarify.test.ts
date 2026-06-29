@@ -50,6 +50,14 @@ function userRefFor(from: string): string {
   // 6. MEDIUM/HIGH verdict is followed by concrete action steps; LOW is not.
   const hi = await send("+act", { text: "He asked me to send 800 dollars in iTunes gift cards and his camera is always broken for video calls" });
   assert.ok(hi.some((m) => m.includes("reportfraud.ftc.gov")), "high-risk verdict should include action steps");
+  assert.ok(hi.some((m) => m.includes("ekow244.github.io")), "med/high verdict should include the full-report reminder");
+
+  // Conversational verdict: the verdict body is natural prose, not a rigid reasons list.
+  assert.ok(!hi[0].includes("Top reasons:"), "verdict should not use the old rigid reasons list");
+
+  // A bare "i love you" should engage (ask), not slap on a verdict.
+  const love = await send("+love", { text: "i love you" });
+  assert.ok(!love.some((m) => m.includes("Veritas verdict")), "a bare 'i love you' should engage, not issue a verdict");
   await send("+benign", { text: "We mostly talk about books and our jobs and what we cooked for dinner this week" });
   const lo2 = await send("+benign", { text: "no" });
   assert.ok(!lo2.some((m) => m.includes("reportfraud.ftc.gov")), "low-risk verdict must not include action steps");

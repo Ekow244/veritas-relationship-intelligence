@@ -15,6 +15,7 @@ import {
   imageNeedsVisionMessage,
   imageUnreadableMessage,
   outOfScopeMessage,
+  reportReminderMessage,
   reportThanksMessage,
   scopeRefusalMessage,
 } from "./formatter.js";
@@ -149,6 +150,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   const replies = [formatVerdict(verdict)];
   if (verdict.riskLevel === "medium" || verdict.riskLevel === "high") {
     replies.push(actionStepsMessage());
+    replies.push(reportReminderMessage());
   }
   replies.push(followUpMessage());
   return replies;

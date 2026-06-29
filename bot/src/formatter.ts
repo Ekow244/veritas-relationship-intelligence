@@ -60,28 +60,12 @@ export function followUpMessage(): string {
 }
 
 export function formatVerdict(verdict: Verdict): string {
-  const reasons = verdict.signals.length
-    ? verdict.signals
-        .slice(0, 4)
-        .map((signal, index) => `${index + 1}. ${signal.label}: “${signal.evidence}”`)
-        .join("\n")
-    : "No strong red flags found in the submitted sample.";
-
-  const balancing = verdict.balancingSignals.length
-    ? `\n\nBalancing signs:\n${verdict.balancingSignals.slice(0, 3).map((item) => `• ${item}`).join("\n")}`
-    : "";
-
+  // The rating line is code-templated (deterministic). The body is the natural,
+  // LLM-authored explanation that weaves the evidence in conversationally.
   return [
     `${riskEmoji[verdict.riskLevel]} Veritas verdict: ${verdict.riskLevel.toUpperCase()} risk`,
     "",
     verdict.explanation,
-    "",
-    "Top reasons:",
-    reasons,
-    balancing,
-    "",
-    "Next steps:",
-    verdict.nextSteps.map((step) => `• ${step}`).join("\n"),
     "",
     verdict.disclaimer,
     "",
@@ -89,6 +73,10 @@ export function formatVerdict(verdict: Verdict): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+export function reportReminderMessage(): string {
+  return "🔎 Want a deeper, human investigation — identity and footprint checks with a documented report? You can request one at https://ekow244.github.io/veritas-relationship-intelligence/";
 }
 
 export function reportThanksMessage(outcome: string): string {
