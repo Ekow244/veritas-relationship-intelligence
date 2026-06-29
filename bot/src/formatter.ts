@@ -55,8 +55,11 @@ export function overloadedMessage(): string {
   return "⏳ I’m a bit overloaded right now — please resend your message in a minute and I’ll finish your read.";
 }
 
-export function rateLimitedMessage(): string {
-  return "⏳ I’ve hit today’s safety limit for checks. Please try again tomorrow, or reply DELETE if you want me to remove your stored derived records.";
+export function rateLimitedMessage(reason?: "per_user_daily_limit" | "global_daily_limit" | "estimated_daily_cost_limit"): string {
+  if (reason === "per_user_daily_limit") {
+    return "⏳ You’ve reached your daily limit for checks. Please try again tomorrow, or reply DELETE to remove your stored derived records.";
+  }
+  return "⏳ I’m at capacity right now — please try again in a few minutes.";
 }
 
 export function followUpMessage(): string {
@@ -94,8 +97,13 @@ export function reportThanksMessage(outcome: string, avertedHarm = false): strin
   return `Thanks. I recorded this as ${outcome.toUpperCase()} feedback for the pattern library, not as a public profile on anyone.${impact}`;
 }
 
-export function deleteConfirmationMessage(removed: { casesRemoved: number; reportsRemoved: number }): string {
-  return `Deleted your active session and removed stored derived records I could match. Cases removed: ${removed.casesRemoved}. Reports removed: ${removed.reportsRemoved}.`;
+export function deleteConfirmationMessage(removed: {
+  casesRemoved: number;
+  caseEventsRemoved: number;
+  detectedEntitiesRemoved: number;
+  reportsRemoved: number;
+}): string {
+  return `Deleted your active session and removed stored derived records I could match — cases: ${removed.casesRemoved}, events: ${removed.caseEventsRemoved}, entities: ${removed.detectedEntitiesRemoved}, reports: ${removed.reportsRemoved}.`;
 }
 
 export function scopeRefusalMessage(): string {

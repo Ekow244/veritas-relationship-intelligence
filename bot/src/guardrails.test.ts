@@ -16,6 +16,7 @@ import { DataStore } from "./storage.js";
     guardrails: {
       ...getConfig().guardrails,
       perUserDailyLimit: 1,
+      globalDailyCheckLimit: 500, // explicit so this exercises the PER-USER path, not the global cap
     },
   };
   const runtime = {
@@ -38,9 +39,18 @@ import { DataStore } from "./storage.js";
     text: "He also wants gift cards.",
   });
 
-  assert.ok(!first[0].includes("safety limit"), "first check should be allowed");
-  assert.ok(second[0].includes("safety limit"), "second same-user check should be rate-limited");
-  assert.equal(runtime.guardrails.snapshot().globalChecks, 1, "only allowed checks should increment usage");
+  // A different user — must NOT be blocked by the first user's per-user limit.
+  const otherUser = await processIncomingMessage(runtime, {
+    provider: "simulator",
+    from: "+15550009999",
+    timestamp: Date.now(),
+    text: "He asked me to send money and says his camera is broken for video calls.",
+  });
+
+  assert.ok(!first[0].includes("daily limit"), "first check should be allowed");
+  assert.ok(second[0].includes("daily limit"), "second same-user check should hit the per-user daily limit");
+  assert.ok(!otherUser[0].includes("daily limit"), "a different user must NOT be blocked by another user's limit");
+  assert.equal(runtime.guardrails.snapshot().globalChecks, 2, "only the two allowed checks should increment usage");
 
   console.log("guardrails.test passed");
 })().catch((error) => {

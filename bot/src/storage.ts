@@ -46,21 +46,18 @@ export class DataStore {
         valueHash: record.valueHash,
         valuePreview: candidate.valuePreview,
         matchCount: 0,
-        previousCaseIds: [],
         confidence: Math.max(candidate.confidence, record.confidence),
       };
 
+      // Aggregate a count only — never retain other users' case IDs, so the
+      // intel signal can't become a cross-user dossier.
       match.matchCount += 1;
-      if (!match.previousCaseIds.includes(record.caseId)) {
-        match.previousCaseIds.push(record.caseId);
-      }
       match.confidence = Math.max(match.confidence, record.confidence);
       matches.set(key, match);
     }
 
     return [...matches.values()].map((match) => ({
       ...match,
-      previousCaseIds: match.previousCaseIds.slice(0, 5),
       confidence: Math.min(0.95, match.confidence + Math.min(0.15, match.matchCount * 0.03)),
     }));
   }

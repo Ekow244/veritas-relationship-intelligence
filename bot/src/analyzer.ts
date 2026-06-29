@@ -67,7 +67,6 @@ export async function analyzeSession(
     score,
     signals: sortedSignals,
     balancingSignals,
-    counterSignals: balancingSignals,
     uncertainty: buildUncertainty(riskLevel, score, sortedSignals, balancingSignals, caseImages.length, config.openai.enabled),
     explanation: explanation ?? buildHeuristicExplanation(riskLevel, signals, balancingSignals),
     nextSteps: nextSteps?.length ? nextSteps.slice(0, 4) : defaultNextSteps(riskLevel, signals),
@@ -82,7 +81,7 @@ function intelSignals(matches: IntelMatch[]): Signal[] {
   return matches.map((match) => ({
     type: `known_${match.entityType}`,
     label: `Known repeated ${match.entityType.replaceAll("_", " ")}`,
-    evidence: `${match.valuePreview} appeared in ${match.matchCount} prior case${match.matchCount === 1 ? "" : "s"}.`,
+    evidence: `This ${match.entityType.replaceAll("_", " ")} has appeared in ${match.matchCount} prior case${match.matchCount === 1 ? "" : "s"}.`,
     confidence: match.confidence,
     weight: intelWeight(match.entityType),
     source: "intel",
@@ -198,7 +197,9 @@ function buildUncertainty(
   if (score > 0 && score < 2.6) reasons.push("The available evidence is limited or relatively weak.");
 
   if (reasons.length >= 2 || riskLevel === "medium") return { level: "medium", reasons };
-  if (signals.length === 0 || (imageCount > 0 && !openAiEnabled)) return { level: "high", reasons };
+  // "Not much to go on" is medium epistemic uncertainty, not high — never show an
+  // alarming "Uncertainty: high" on an otherwise benign/low case.
+  if (signals.length === 0 || (imageCount > 0 && !openAiEnabled)) return { level: "medium", reasons };
   return { level: "low", reasons };
 }
 
@@ -209,6 +210,8 @@ function requiresHumanReview(
   balancingSignals: string[],
 ): boolean {
   const hasMoney = signals.some((signal) => signal.type === "money_request");
-  const hasConflictingContext = signals.length > 0 && balancingSignals.length > 0;
+  // Only a genuine conflict when the case isn't already clearly low-risk — a lone
+  // weak signal plus a balancing note shouldn't demand human review.
+  const hasConflictingContext = riskLevel !== "low" && signals.length > 0 && balancingSignals.length > 0;
   return (riskLevel === "high" && hasMoney) || score >= 5.2 || hasConflictingContext;
 }

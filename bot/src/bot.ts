@@ -96,25 +96,33 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       reason: guardrail.reason,
       retryAfterSeconds: guardrail.retryAfterSeconds,
     }));
-    return [rateLimitedMessage()];
+    return [rateLimitedMessage(guardrail.reason)];
   }
 
   const input = toSessionInput(kind, message);
   const hasImage = Boolean(message.images?.some((i) => i.dataUrl) || message.image?.dataUrl);
   const shortText = (message.text ?? "").trim().length <= 60 && !/\n/.test(message.text ?? "");
 
+  // A stable case id is decided when a case starts and reused for every event +
+  // the verdict, so case_started / input_received / verdict_created all join.
   let updated: Session;
+  let caseId: string;
   if (session.stage === "awaiting_screening") {
     // the screening answer continues the current case
     updated = runtime.sessions.addInput(userRef, input);
+    caseId = session.currentCaseId ?? makeId("case");
   } else if (session.stage === "verdict_done" && shortText && !hasImage) {
     // a short follow-up augments the just-finished case
     updated = runtime.sessions.addInput(userRef, input);
+    caseId = session.currentCaseId ?? makeId("case");
   } else {
     // new primary submission (or first message) = fresh case
+    caseId = makeId("case");
     updated = runtime.sessions.startCase(userRef, input);
+    runtime.sessions.setCaseId(userRef, caseId);
     await runtime.data.appendCaseEvent(buildCaseEvent({
       userRef,
+      caseId,
       type: "case_started",
       metadata: {
         provider: message.provider,
@@ -126,6 +134,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
 
   await runtime.data.appendCaseEvent(buildCaseEvent({
     userRef,
+    caseId,
     type: "input_received",
     metadata: {
       provider: message.provider,
@@ -171,7 +180,6 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     return [askForMoreMessage()];
   }
 
-  const caseId = makeId("case");
   const detectedEntities = extractDetectedEntities({
     caseId,
     userRef,

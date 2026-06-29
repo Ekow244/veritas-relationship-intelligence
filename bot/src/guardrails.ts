@@ -18,6 +18,12 @@ export class GuardrailStore {
 
   constructor(private readonly config: BotConfig["guardrails"]) {}
 
+  /**
+   * MUST stay synchronous. The read-check-increment is atomic only because it
+   * runs to completion within a single event-loop tick. Adding `await` here
+   * (e.g. for persistence) would open a TOCTOU window where concurrent webhook
+   * requests bypass the limit — persist out-of-band instead.
+   */
   recordCheck(userRef: string): GuardrailDecision {
     this.rotateIfNeeded();
 
