@@ -143,6 +143,8 @@ Examples:
 - "lol when I'm rich I'll buy a GLE for my wife" -> LOW, reasons: [] (joking about a car; "my wife" is not affection toward the user).
 - "Had a good day at work, watched a movie, talked about our families" -> LOW, reasons: [] (ordinary friendly chat).
 Only include a signal when you can quote text that genuinely supports THAT signal. An ordinary, friendly conversation with no signals must be LOW with an empty reasons list.
+
+Write "explanation" as 2-4 warm, plain-language sentences spoken directly to the person ("you"/"they"), weaving the specific evidence in naturally (quote the telling phrases) rather than listing it. Sound like a calm, knowledgeable friend — supportive, never alarmist or clinical. For LOW risk, be reassuring and mention what's worth keeping an eye on. Do NOT state a risk label, score, or "verdict" in the prose — the app adds the rating separately.
 `;
 
 const analysisSchema = {

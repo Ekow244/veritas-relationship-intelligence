@@ -23,7 +23,7 @@ async function main(): Promise<void> {
   });
 
   const output = replies.join("\n\n");
-  if (!output.includes("HIGH") || !output.includes("Money")) {
+  if (!output.includes("HIGH") || !/money/i.test(output)) {
     console.error(output);
     throw new Error("Expected high-risk money-request verdict");
   }
