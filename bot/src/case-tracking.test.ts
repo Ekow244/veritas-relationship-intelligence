@@ -24,6 +24,15 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
     ].join(" "),
   });
 
+  // User 1 confirms it was a scam — this consents their detected entities to the
+  // cross-case intel set, so user 2's case below can match them.
+  await processIncomingMessage(runtime, {
+    provider: "simulator",
+    from: "+15550001111",
+    timestamp: Date.now(),
+    text: "SCAM - I blocked them and did not send money.",
+  });
+
   await processIncomingMessage(runtime, {
     provider: "simulator",
     from: "+15550002222",
@@ -66,6 +75,13 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
   assert.ok(!JSON.stringify(entities).includes("5551234567"), "raw phone number must not be stored");
   assert.ok(entities.every((entity) => entity.valueHash.length === 64), "entities should store sha256 hashes");
 
+  // Privacy regression guard: derived signals only — no raw chat/PII in cases.jsonl.
+  const casesJson = JSON.stringify(cases).toLowerCase();
+  assert.ok(!casesJson.includes("1234567"), "raw phone digits must not appear in stored cases");
+  assert.ok(!casesJson.includes("example.com"), "raw url/email must not appear in stored cases");
+  assert.ok(!casesJson.includes("loves me"), "raw chat phrases must not appear in stored cases");
+  assert.ok(cases[0].verdict && !("evidence" in cases[0].verdict.signals[0]), "stored signals must not carry the raw evidence window");
+
   console.log("case-tracking.test passed");
 })().catch((error) => {
   console.error(error);
@@ -73,7 +89,12 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
 });
 
 async function readJsonl<T>(dataDir: string, fileName: string): Promise<T[]> {
-  const raw = await readFile(join(dataDir, fileName), "utf8");
+  let raw: string;
+  try {
+    raw = await readFile(join(dataDir, fileName), "utf8");
+  } catch {
+    return []; // tolerate a missing file rather than dying with ENOENT before assertions
+  }
   return raw
     .split("\n")
     .filter(Boolean)

@@ -18,20 +18,24 @@ import {
   outOfScopeMessage,
   reportReminderMessage,
   reportThanksMessage,
+  rateLimitedMessage,
   scopeRefusalMessage,
 } from "./formatter.js";
 import type { BotMessage, InputKind, Session, SessionInput, StoredReport } from "./types.js";
 import type { DataStore } from "./storage.js";
 import type { SessionStore } from "./session-store.js";
+import type { GuardrailStore } from "./guardrails.js";
 import { hashUser, makeId, nowIso } from "./utils.js";
 
 export type BotRuntime = {
   config: BotConfig;
   sessions: SessionStore;
   data: DataStore;
+  guardrails?: GuardrailStore;
 };
 
 export async function processIncomingMessage(runtime: BotRuntime, message: BotMessage): Promise<string[]> {
+  const startedAt = Date.now();
   const userRef = hashUser(message.from, runtime.config.userHashSalt);
   const kind = classifyMessage(message);
   const session = runtime.sessions.get(userRef);
@@ -65,6 +69,11 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       createdAt: nowIso(),
     };
     await runtime.data.appendReport(report);
+    if (report.consentedToIntel) {
+      // The user confirmed this case — their detected entities may now help flag
+      // repeat offenders in other users' cases.
+      await runtime.data.markEntitiesConsented(userRef, report.caseId);
+    }
     await runtime.data.appendCaseEvent(buildCaseEvent({
       userRef,
       caseId: report.caseId,
@@ -84,22 +93,41 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   if (kind === "out_of_scope") return [outOfScopeMessage()];
   if (kind === "greeting") return [greetingMessage()];
 
+  const guardrail = runtime.guardrails?.recordCheck(userRef);
+  if (guardrail && !guardrail.allowed) {
+    console.warn(JSON.stringify({
+      level: "warn",
+      event: "guardrail_limit_hit",
+      reason: guardrail.reason,
+      retryAfterSeconds: guardrail.retryAfterSeconds,
+    }));
+    return [rateLimitedMessage(guardrail.reason)];
+  }
+
   const input = toSessionInput(kind, message);
   const hasImage = Boolean(message.images?.some((i) => i.dataUrl) || message.image?.dataUrl);
   const shortText = (message.text ?? "").trim().length <= 60 && !/\n/.test(message.text ?? "");
 
+  // A stable case id is decided when a case starts and reused for every event +
+  // the verdict, so case_started / input_received / verdict_created all join.
   let updated: Session;
+  let caseId: string;
   if (session.stage === "awaiting_screening") {
     // the screening answer continues the current case
     updated = runtime.sessions.addInput(userRef, input);
+    caseId = session.currentCaseId ?? makeId("case");
   } else if (session.stage === "verdict_done" && shortText && !hasImage) {
     // a short follow-up augments the just-finished case
     updated = runtime.sessions.addInput(userRef, input);
+    caseId = session.currentCaseId ?? makeId("case");
   } else {
     // new primary submission (or first message) = fresh case
+    caseId = makeId("case");
     updated = runtime.sessions.startCase(userRef, input);
+    runtime.sessions.setCaseId(userRef, caseId);
     await runtime.data.appendCaseEvent(buildCaseEvent({
       userRef,
+      caseId,
       type: "case_started",
       metadata: {
         provider: message.provider,
@@ -111,6 +139,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
 
   await runtime.data.appendCaseEvent(buildCaseEvent({
     userRef,
+    caseId,
     type: "input_received",
     metadata: {
       provider: message.provider,
@@ -156,7 +185,6 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     return [askForMoreMessage()];
   }
 
-  const caseId = makeId("case");
   const detectedEntities = extractDetectedEntities({
     caseId,
     userRef,
@@ -191,6 +219,17 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       entityCount: detectedEntities.length,
       intelMatchCount: intelMatches.length,
     },
+  }));
+  console.log(JSON.stringify({
+    level: "info",
+    event: "bot_check_completed",
+    caseId: verdict.caseId,
+    riskLevel: verdict.riskLevel,
+    score: verdict.score,
+    latencyMs: Date.now() - startedAt,
+    entityCount: detectedEntities.length,
+    intelMatchCount: intelMatches.length,
+    usage: runtime.guardrails?.snapshot(),
   }));
   runtime.sessions.setStage(userRef, "verdict_done");
 

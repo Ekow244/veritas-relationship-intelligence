@@ -26,7 +26,7 @@ const highWeightRules: TaxonomyRule[] = [
     weight: 2.8,
     confidence: 0.78,
     patterns: [
-      /\b(can'?t|cannot|not now|camera broken|bad camera|video.*later|no video|don'?t video|network.*bad)\b/i,
+      /\b(camera broken|bad camera|video.*later|no video|don'?t video|won'?t video|no facetime)\b/i,
       /\b(camera|phone|network).{0,40}\b(broken|bad|not working|problem)\b/i,
       /\b(broken|bad|not working|problem).{0,40}\b(camera|phone|network)\b/i,
       /\b(video call|facetime|live call).{0,60}\b(later|busy|not possible|problem|broken)\b/i,

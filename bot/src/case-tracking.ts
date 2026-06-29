@@ -13,7 +13,7 @@ import type {
   StoredCase,
   Verdict,
 } from "./types.js";
-import { makeId, nowIso, truncate } from "./utils.js";
+import { makeId, nowIso } from "./utils.js";
 
 const promptVersion = "veritas-romance-v1";
 
@@ -39,11 +39,18 @@ export function buildStoredCase(input: {
     verdict: {
       riskLevel: input.verdict.riskLevel,
       score: input.verdict.score,
-      signals: input.verdict.signals,
+      // Drop each signal's raw `evidence` window (can contain phone/email/URL
+      // from the chat) and the LLM `explanation` (prompted to quote phrases).
+      // Only derived signal metadata is persisted.
+      signals: input.verdict.signals.map((signal) => ({
+        type: signal.type,
+        label: signal.label,
+        confidence: signal.confidence,
+        weight: signal.weight,
+        source: signal.source,
+      })),
       balancingSignals: input.verdict.balancingSignals,
-      counterSignals: input.verdict.counterSignals,
       uncertainty: input.verdict.uncertainty,
-      explanation: input.verdict.explanation,
       nextSteps: input.verdict.nextSteps,
       doNotDo: input.verdict.doNotDo,
       requiresHumanReview: input.verdict.requiresHumanReview,
@@ -92,6 +99,7 @@ export function extractDetectedEntities(input: {
       valuePreview: previewEntity(type, normalized),
       source,
       confidence,
+      consentedToIntel: false,
       createdAt: nowIso(),
     });
   };
@@ -177,5 +185,15 @@ function previewEntity(type: DetectedEntityType, value: string): string {
   if (type === "crypto_wallet") {
     return `${value.slice(0, 6)}...${value.slice(-4)}`;
   }
-  return truncate(value, 80);
+  if (type === "url") {
+    // host only — never the full path/query (which can carry identifiers)
+    return value.split("/")[0] || "link";
+  }
+  if (type === "payment_handle") {
+    // the leading provider keyword only, never the raw trailing capture
+    return `${value.split(/\s+/)[0] ?? "payment"} handle`;
+  }
+  if (type === "image_reference") return "image";
+  // No raw fall-through for any PII-bearing type.
+  return "redacted";
 }

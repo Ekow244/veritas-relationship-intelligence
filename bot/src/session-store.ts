@@ -61,6 +61,12 @@ export class SessionStore {
     session.updatedAt = Date.now();
   }
 
+  setCaseId(userRef: string, caseId: string): void {
+    const session = this.get(userRef);
+    session.currentCaseId = caseId;
+    session.updatedAt = Date.now();
+  }
+
   setVerdict(userRef: string, verdict: Verdict): void {
     const session = this.get(userRef);
     session.lastVerdict = verdict;

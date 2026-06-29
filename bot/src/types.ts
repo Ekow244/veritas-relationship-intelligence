@@ -60,6 +60,7 @@ export type Session = {
   greeted: boolean;
   clarifierAsked?: boolean;
   stage?: "awaiting_screening" | "verdict_done";
+  currentCaseId?: string;
   inputs: SessionInput[];
   lastVerdict?: Verdict;
 };
@@ -78,7 +79,6 @@ export type IntelMatch = {
   valueHash: string;
   valuePreview: string;
   matchCount: number;
-  previousCaseIds: string[];
   confidence: number;
 };
 
@@ -88,12 +88,29 @@ export type Verdict = {
   score: number;
   signals: Signal[];
   balancingSignals: string[];
-  counterSignals: string[];
   uncertainty: {
     level: RiskLevel;
     reasons: string[];
   };
   explanation: string;
+  nextSteps: string[];
+  doNotDo: string[];
+  requiresHumanReview: boolean;
+  disclaimer: string;
+  createdAt: string;
+};
+
+// Stored form of a signal: derived metadata only — the raw `evidence` window
+// (which can contain phone numbers, emails, URLs from the chat) is dropped at
+// the storage boundary so it never lands in cases.jsonl.
+export type StoredSignal = Pick<Signal, "type" | "label" | "confidence" | "weight" | "source">;
+
+export type StoredVerdict = {
+  riskLevel: RiskLevel;
+  score: number;
+  signals: StoredSignal[];
+  balancingSignals: string[];
+  uncertainty: { level: RiskLevel; reasons: string[] };
   nextSteps: string[];
   doNotDo: string[];
   requiresHumanReview: boolean;
@@ -112,7 +129,7 @@ export type StoredCase = {
   ttlExpiresAt: string;
   modelVersion?: string;
   promptVersion?: string;
-  verdict?: Omit<Verdict, "caseId">;
+  verdict?: StoredVerdict;
 };
 
 export type CaseEventType =
@@ -148,6 +165,10 @@ export type DetectedEntity = {
   valuePreview: string;
   source: "regex" | "image_metadata";
   confidence: number;
+  // False at extraction. Flipped to true only when the user later confirms the
+  // case (reports back) — only then may this entity contribute to OTHER users'
+  // cross-case matches. Prevents using non-consenting users' data.
+  consentedToIntel: boolean;
   createdAt: string;
 };
 
@@ -156,8 +177,9 @@ export type StoredReport = {
   caseId?: string;
   userRef: string;
   reportedOutcome: "scam" | "safe" | "unsure";
-  userAction: "blocked" | "stopped_contact" | "sent_money" | "did_not_send" | "reported" | "unknown";
-  avertedHarm: boolean;
+  // Optional: older append-only records predate these fields (no migration path).
+  userAction?: "blocked" | "stopped_contact" | "sent_money" | "did_not_send" | "reported" | "unknown";
+  avertedHarm?: boolean;
   scamIndicators: string[];
   consentedToIntel: boolean;
   createdAt: string;
