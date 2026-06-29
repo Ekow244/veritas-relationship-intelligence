@@ -1,5 +1,13 @@
 export type RiskLevel = "low" | "medium" | "high";
 
+export type ScamType =
+  | "romance"
+  | "rental"
+  | "investment"
+  | "sextortion"
+  | "impersonation"
+  | "unknown";
+
 export type InputKind =
   | "greeting"
   | "chat_text"
@@ -38,6 +46,13 @@ export type SessionInput = {
   receivedAt: number;
 };
 
+export type CaseInputSummary = {
+  kind: InputKind;
+  receivedAt: string;
+  textLength: number;
+  imageCount: number;
+};
+
 export type Session = {
   userRef: string;
   startedAt: number;
@@ -45,6 +60,7 @@ export type Session = {
   greeted: boolean;
   clarifierAsked?: boolean;
   stage?: "awaiting_screening" | "verdict_done";
+  currentCaseId?: string;
   inputs: SessionInput[];
   lastVerdict?: Verdict;
 };
@@ -55,7 +71,15 @@ export type Signal = {
   evidence: string;
   confidence: number;
   weight: number;
-  source: "heuristic" | "llm" | "image_api" | "user_report";
+  source: "heuristic" | "llm" | "image_api" | "user_report" | "intel";
+};
+
+export type IntelMatch = {
+  entityType: DetectedEntityType;
+  valueHash: string;
+  valuePreview: string;
+  matchCount: number;
+  confidence: number;
 };
 
 export type Verdict = {
@@ -64,8 +88,32 @@ export type Verdict = {
   score: number;
   signals: Signal[];
   balancingSignals: string[];
+  uncertainty: {
+    level: RiskLevel;
+    reasons: string[];
+  };
   explanation: string;
   nextSteps: string[];
+  doNotDo: string[];
+  requiresHumanReview: boolean;
+  disclaimer: string;
+  createdAt: string;
+};
+
+// Stored form of a signal: derived metadata only — the raw `evidence` window
+// (which can contain phone numbers, emails, URLs from the chat) is dropped at
+// the storage boundary so it never lands in cases.jsonl.
+export type StoredSignal = Pick<Signal, "type" | "label" | "confidence" | "weight" | "source">;
+
+export type StoredVerdict = {
+  riskLevel: RiskLevel;
+  score: number;
+  signals: StoredSignal[];
+  balancingSignals: string[];
+  uncertainty: { level: RiskLevel; reasons: string[] };
+  nextSteps: string[];
+  doNotDo: string[];
+  requiresHumanReview: boolean;
   disclaimer: string;
   createdAt: string;
 };
@@ -75,10 +123,53 @@ export type StoredCase = {
   createdAt: string;
   channel: "whatsapp" | "simulator";
   userRef: string;
-  inputsSummary: string[];
-  status: "verdict_created" | "partial" | "deleted";
+  scamType: ScamType;
+  inputsSummary: CaseInputSummary[];
+  status: "created" | "verdict_created" | "partial" | "deleted";
   ttlExpiresAt: string;
-  verdict?: Omit<Verdict, "caseId">;
+  modelVersion?: string;
+  promptVersion?: string;
+  verdict?: StoredVerdict;
+};
+
+export type CaseEventType =
+  | "case_started"
+  | "input_received"
+  | "verdict_created"
+  | "report_received"
+  | "delete_requested";
+
+export type CaseEvent = {
+  id: string;
+  caseId?: string;
+  userRef: string;
+  type: CaseEventType;
+  createdAt: string;
+  metadata: Record<string, string | number | boolean | string[] | undefined>;
+};
+
+export type DetectedEntityType =
+  | "phone_number"
+  | "url"
+  | "email"
+  | "payment_handle"
+  | "crypto_wallet"
+  | "image_reference";
+
+export type DetectedEntity = {
+  id: string;
+  caseId: string;
+  userRef: string;
+  type: DetectedEntityType;
+  valueHash: string;
+  valuePreview: string;
+  source: "regex" | "image_metadata";
+  confidence: number;
+  // False at extraction. Flipped to true only when the user later confirms the
+  // case (reports back) — only then may this entity contribute to OTHER users'
+  // cross-case matches. Prevents using non-consenting users' data.
+  consentedToIntel: boolean;
+  createdAt: string;
 };
 
 export type StoredReport = {
@@ -86,6 +177,9 @@ export type StoredReport = {
   caseId?: string;
   userRef: string;
   reportedOutcome: "scam" | "safe" | "unsure";
+  // Optional: older append-only records predate these fields (no migration path).
+  userAction?: "blocked" | "stopped_contact" | "sent_money" | "did_not_send" | "reported" | "unknown";
+  avertedHarm?: boolean;
   scamIndicators: string[];
   consentedToIntel: boolean;
   createdAt: string;

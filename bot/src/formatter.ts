@@ -55,6 +55,13 @@ export function overloadedMessage(): string {
   return "⏳ I’m a bit overloaded right now — please resend your message in a minute and I’ll finish your read.";
 }
 
+export function rateLimitedMessage(reason?: "per_user_daily_limit" | "global_daily_limit" | "estimated_daily_cost_limit"): string {
+  if (reason === "per_user_daily_limit") {
+    return "⏳ You’ve reached your daily limit for checks. Please try again tomorrow, or reply DELETE to remove your stored derived records.";
+  }
+  return "⏳ I’m at capacity right now — please try again in a few minutes.";
+}
+
 export function followUpMessage(): string {
   return "👀 Anything else they’ve said or asked that felt off? Send it and I’ll factor it into the read.";
 }
@@ -62,14 +69,20 @@ export function followUpMessage(): string {
 export function formatVerdict(verdict: Verdict): string {
   // The rating line is code-templated (deterministic). The body is the natural,
   // LLM-authored explanation that weaves the evidence in conversationally.
+  const uncertaintyLine = verdict.uncertainty.level === "low"
+    ? undefined
+    : `Uncertainty: ${verdict.uncertainty.reasons[0] ?? "This is a signal check, not proof."}`;
+
   return [
     `${riskEmoji[verdict.riskLevel]} Veritas verdict: ${verdict.riskLevel.toUpperCase()} risk`,
     "",
     verdict.explanation,
+    uncertaintyLine ? "" : undefined,
+    uncertaintyLine,
     "",
     verdict.disclaimer,
     "",
-    "Reply SCAM, SAFE, or UNSURE later to tell me how it turned out — it helps me improve, and I don’t save anyone’s personal info.",
+    "Reply SCAM, SAFE, or UNSURE later to tell me how it turned out. You can add what happened, like “SCAM - I blocked them and did not send money.”",
   ]
     .filter(Boolean)
     .join("\n");
@@ -79,12 +92,18 @@ export function reportReminderMessage(): string {
   return "🔎 Want a deeper, human investigation — identity and footprint checks with a documented report? You can request one at https://ekow244.github.io/veritas-relationship-intelligence/";
 }
 
-export function reportThanksMessage(outcome: string): string {
-  return `Thanks. I recorded this as ${outcome.toUpperCase()} feedback for the pattern library, not as a public profile on anyone.`;
+export function reportThanksMessage(outcome: string, avertedHarm = false): string {
+  const impact = avertedHarm ? " I also marked it as likely averted harm." : "";
+  return `Thanks. I recorded this as ${outcome.toUpperCase()} feedback for the pattern library, not as a public profile on anyone.${impact}`;
 }
 
-export function deleteConfirmationMessage(removed: { casesRemoved: number; reportsRemoved: number }): string {
-  return `Deleted your active session and removed stored derived records I could match. Cases removed: ${removed.casesRemoved}. Reports removed: ${removed.reportsRemoved}.`;
+export function deleteConfirmationMessage(removed: {
+  casesRemoved: number;
+  caseEventsRemoved: number;
+  detectedEntitiesRemoved: number;
+  reportsRemoved: number;
+}): string {
+  return `Deleted your active session and removed stored derived records I could match — cases: ${removed.casesRemoved}, events: ${removed.caseEventsRemoved}, entities: ${removed.detectedEntitiesRemoved}, reports: ${removed.reportsRemoved}.`;
 }
 
 export function scopeRefusalMessage(): string {

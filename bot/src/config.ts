@@ -5,6 +5,12 @@ export type BotConfig = {
   sessionTtlMs: number;
   dataDir: string;
   userHashSalt: string;
+  guardrails: {
+    perUserDailyLimit: number;
+    globalDailyCheckLimit: number;
+    estimatedCostCentsPerCheck: number;
+    estimatedDailyCostCentsLimit: number;
+  };
   whatsapp: {
     verifyToken?: string;
     accessToken?: string;
@@ -46,6 +52,12 @@ export function getConfig(): BotConfig {
     sessionTtlMs: ttlMinutes * 60 * 1000,
     dataDir: env("DATA_DIR") ?? "./bot/data",
     userHashSalt: env("USER_HASH_SALT") ?? "dev-only-change-me",
+    guardrails: {
+      perUserDailyLimit: envInt("PER_USER_DAILY_CHECK_LIMIT", 25),
+      globalDailyCheckLimit: envInt("GLOBAL_DAILY_CHECK_LIMIT", 500),
+      estimatedCostCentsPerCheck: envInt("ESTIMATED_COST_CENTS_PER_CHECK", 3),
+      estimatedDailyCostCentsLimit: envInt("ESTIMATED_DAILY_COST_CENTS_LIMIT", 5000),
+    },
     whatsapp: {
       verifyToken: env("WHATSAPP_VERIFY_TOKEN"),
       accessToken: env("WHATSAPP_ACCESS_TOKEN"),

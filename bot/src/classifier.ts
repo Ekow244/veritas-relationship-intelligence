@@ -1,7 +1,7 @@
 import type { BotMessage, InputKind } from "./types.js";
 
 const greetingPattern = /^(hi|hello|hey|start|help)$/i;
-const reportPattern = /^(scam|safe|unsure)$/i;
+const reportPattern = /^(scam|safe|unsure)(?:\s*[-:]\s*.+)?$/i;
 const deletePattern = /^(delete|delete my data|erase|erase my data)$/i;
 
 const scopeViolationPatterns = [

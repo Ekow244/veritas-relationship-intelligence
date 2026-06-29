@@ -1,5 +1,6 @@
 import type { BotConfig } from "./config.js";
 import { analyzeSession } from "./analyzer.js";
+import { buildCaseEvent, buildStoredCase, extractDetectedEntities } from "./case-tracking.js";
 import { classifyMessage } from "./classifier.js";
 import { detectHeuristicSignals } from "./taxonomy.js";
 import {
@@ -17,20 +18,24 @@ import {
   outOfScopeMessage,
   reportReminderMessage,
   reportThanksMessage,
+  rateLimitedMessage,
   scopeRefusalMessage,
 } from "./formatter.js";
-import type { BotMessage, InputKind, Session, SessionInput, StoredCase, StoredReport } from "./types.js";
+import type { BotMessage, InputKind, Session, SessionInput, StoredReport } from "./types.js";
 import type { DataStore } from "./storage.js";
 import type { SessionStore } from "./session-store.js";
+import type { GuardrailStore } from "./guardrails.js";
 import { hashUser, makeId, nowIso } from "./utils.js";
 
 export type BotRuntime = {
   config: BotConfig;
   sessions: SessionStore;
   data: DataStore;
+  guardrails?: GuardrailStore;
 };
 
 export async function processIncomingMessage(runtime: BotRuntime, message: BotMessage): Promise<string[]> {
+  const startedAt = Date.now();
   const userRef = hashUser(message.from, runtime.config.userHashSalt);
   const kind = classifyMessage(message);
   const session = runtime.sessions.get(userRef);
@@ -56,13 +61,31 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       id: makeId("report"),
       caseId: session.lastVerdict?.caseId,
       userRef,
-      reportedOutcome: outcome,
+      reportedOutcome: outcome.reportedOutcome,
+      userAction: outcome.userAction,
+      avertedHarm: outcome.avertedHarm,
       scamIndicators: session.lastVerdict?.signals.map((signal) => signal.type) ?? [],
       consentedToIntel: true,
       createdAt: nowIso(),
     };
     await runtime.data.appendReport(report);
-    return [reportThanksMessage(outcome)];
+    if (report.consentedToIntel) {
+      // The user confirmed this case — their detected entities may now help flag
+      // repeat offenders in other users' cases.
+      await runtime.data.markEntitiesConsented(userRef, report.caseId);
+    }
+    await runtime.data.appendCaseEvent(buildCaseEvent({
+      userRef,
+      caseId: report.caseId,
+      type: "report_received",
+      metadata: {
+        reportedOutcome: report.reportedOutcome,
+        userAction: report.userAction,
+        avertedHarm: report.avertedHarm,
+        consentedToIntel: report.consentedToIntel,
+      },
+    }));
+    return [reportThanksMessage(report.reportedOutcome, report.avertedHarm)];
   }
 
   if (kind === "scope_violation") return [scopeRefusalMessage()];
@@ -70,21 +93,61 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   if (kind === "out_of_scope") return [outOfScopeMessage()];
   if (kind === "greeting") return [greetingMessage()];
 
+  const guardrail = runtime.guardrails?.recordCheck(userRef);
+  if (guardrail && !guardrail.allowed) {
+    console.warn(JSON.stringify({
+      level: "warn",
+      event: "guardrail_limit_hit",
+      reason: guardrail.reason,
+      retryAfterSeconds: guardrail.retryAfterSeconds,
+    }));
+    return [rateLimitedMessage(guardrail.reason)];
+  }
+
   const input = toSessionInput(kind, message);
   const hasImage = Boolean(message.images?.some((i) => i.dataUrl) || message.image?.dataUrl);
   const shortText = (message.text ?? "").trim().length <= 60 && !/\n/.test(message.text ?? "");
 
+  // A stable case id is decided when a case starts and reused for every event +
+  // the verdict, so case_started / input_received / verdict_created all join.
   let updated: Session;
+  let caseId: string;
   if (session.stage === "awaiting_screening") {
     // the screening answer continues the current case
     updated = runtime.sessions.addInput(userRef, input);
+    caseId = session.currentCaseId ?? makeId("case");
   } else if (session.stage === "verdict_done" && shortText && !hasImage) {
     // a short follow-up augments the just-finished case
     updated = runtime.sessions.addInput(userRef, input);
+    caseId = session.currentCaseId ?? makeId("case");
   } else {
     // new primary submission (or first message) = fresh case
+    caseId = makeId("case");
     updated = runtime.sessions.startCase(userRef, input);
+    runtime.sessions.setCaseId(userRef, caseId);
+    await runtime.data.appendCaseEvent(buildCaseEvent({
+      userRef,
+      caseId,
+      type: "case_started",
+      metadata: {
+        provider: message.provider,
+        inputKind: input.kind,
+        hasImage,
+      },
+    }));
   }
+
+  await runtime.data.appendCaseEvent(buildCaseEvent({
+    userRef,
+    caseId,
+    type: "input_received",
+    metadata: {
+      provider: message.provider,
+      inputKind: input.kind,
+      textLength: input.text?.length ?? 0,
+      imageCount: input.images?.length ?? (input.image ? 1 : 0),
+    },
+  }));
 
   const inboundImages = message.images ?? (message.image ? [message.image] : []);
   const anyImageHydrated = inboundImages.some((img) => img.dataUrl);
@@ -122,29 +185,52 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     return [askForMoreMessage()];
   }
 
-  const verdict = await analyzeSession(runtime.config, updated);
+  const detectedEntities = extractDetectedEntities({
+    caseId,
+    userRef,
+    session: updated,
+    salt: runtime.config.userHashSalt,
+  });
+  const intelMatches = await runtime.data.findEntityMatches(detectedEntities);
+  const verdict = await analyzeSession(runtime.config, updated, { caseId, intelMatches });
   runtime.sessions.setVerdict(userRef, verdict);
 
-  const storedCase: StoredCase = {
-    id: verdict.caseId,
-    createdAt: verdict.createdAt,
-    channel: message.provider === "simulator" ? "simulator" : "whatsapp",
+  const storedCase = buildStoredCase({
+    verdict,
+    session: updated,
+    message,
     userRef,
-    inputsSummary: updated.inputs.map((item) => item.kind),
-    status: "verdict_created",
-    ttlExpiresAt: new Date(Date.now() + runtime.config.sessionTtlMs).toISOString(),
-    verdict: {
+    ttlMs: runtime.config.sessionTtlMs,
+    modelVersion: runtime.config.openai.enabled ? runtime.config.openai.model : "heuristic",
+  });
+
+  await runtime.data.appendCase(storedCase);
+  await runtime.data.appendDetectedEntities(detectedEntities);
+  await runtime.data.appendCaseEvent(buildCaseEvent({
+    userRef,
+    caseId: verdict.caseId,
+    type: "verdict_created",
+    metadata: {
       riskLevel: verdict.riskLevel,
       score: verdict.score,
-      signals: verdict.signals,
-      balancingSignals: verdict.balancingSignals,
-      explanation: verdict.explanation,
-      nextSteps: verdict.nextSteps,
-      disclaimer: verdict.disclaimer,
-      createdAt: verdict.createdAt,
+      uncertaintyLevel: verdict.uncertainty.level,
+      requiresHumanReview: verdict.requiresHumanReview,
+      signalTypes: verdict.signals.map((signal) => signal.type),
+      entityCount: detectedEntities.length,
+      intelMatchCount: intelMatches.length,
     },
-  };
-  await runtime.data.appendCase(storedCase);
+  }));
+  console.log(JSON.stringify({
+    level: "info",
+    event: "bot_check_completed",
+    caseId: verdict.caseId,
+    riskLevel: verdict.riskLevel,
+    score: verdict.score,
+    latencyMs: Date.now() - startedAt,
+    entityCount: detectedEntities.length,
+    intelMatchCount: intelMatches.length,
+    usage: runtime.guardrails?.snapshot(),
+  }));
   runtime.sessions.setStage(userRef, "verdict_done");
 
   const replies = [formatVerdict(verdict)];
@@ -183,9 +269,26 @@ function toSessionInput(kind: InputKind, message: BotMessage): SessionInput {
   };
 }
 
-function normalizeReportOutcome(text: string): "scam" | "safe" | "unsure" {
+function normalizeReportOutcome(text: string): Pick<StoredReport, "reportedOutcome" | "userAction" | "avertedHarm"> {
   const normalized = text.trim().toLowerCase();
-  if (normalized === "scam") return "scam";
-  if (normalized === "safe") return "safe";
-  return "unsure";
+  const reportedOutcome = normalized.startsWith("scam")
+    ? "scam"
+    : normalized.startsWith("safe")
+      ? "safe"
+      : "unsure";
+
+  const userAction = /\b(blocked|block)\b/.test(normalized)
+    ? "blocked"
+    : /\b(stopped|cut contact|no contact|ended|walked away)\b/.test(normalized)
+      ? "stopped_contact"
+      : /\b(sent|paid|transferred|wired)\b/.test(normalized) && !/\b(did not|didn'?t|never|no)\s+(send|pay|transfer|wire)/.test(normalized)
+        ? "sent_money"
+        : /\b(did not|didn'?t|never|no)\s+(send|pay|transfer|wire)|\bnot send\b/.test(normalized)
+          ? "did_not_send"
+          : /\b(reported|filed a report|reportfraud|ic3|bank)\b/.test(normalized)
+            ? "reported"
+            : "unknown";
+
+  const avertedHarm = reportedOutcome === "scam" && ["blocked", "stopped_contact", "did_not_send", "reported"].includes(userAction);
+  return { reportedOutcome, userAction, avertedHarm };
 }

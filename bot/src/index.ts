@@ -8,6 +8,7 @@ import { hydrateTwilioImages, parseTwilioMessage, planTwilioResponse, sendTwilio
 import { classifyMessage } from "./classifier.js";
 import { analyzingMessage, overloadedMessage } from "./formatter.js";
 import { hydrateMetaImage, parseMetaWebhook, sendWhatsAppText } from "./whatsapp-cloud.js";
+import { GuardrailStore } from "./guardrails.js";
 import {
   jsonResponse,
   readRawBody,
@@ -23,6 +24,7 @@ const runtime = {
   config,
   sessions: new SessionStore(config.sessionTtlMs),
   data: new DataStore(config.dataDir),
+  guardrails: new GuardrailStore(config.guardrails),
 };
 
 const server = createServer(async (req, res) => {
@@ -34,6 +36,7 @@ const server = createServer(async (req, res) => {
         ok: true,
         service: "veritas-whatsapp-bot",
         openaiEnabled: config.openai.enabled && Boolean(config.openai.apiKey),
+        usage: runtime.guardrails.snapshot(),
       });
     }
 

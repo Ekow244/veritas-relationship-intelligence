@@ -1,10 +1,14 @@
 import type { BotConfig } from "./config.js";
 import { analyzeWithOpenAI } from "./openai-analyzer.js";
 import { detectHeuristicSignals, scoreSignals } from "./taxonomy.js";
-import type { RiskLevel, Session, Signal, Verdict } from "./types.js";
+import type { IntelMatch, RiskLevel, Session, Signal, Verdict } from "./types.js";
 import { makeId, nowIso } from "./utils.js";
 
-export async function analyzeSession(config: BotConfig, session: Session): Promise<Verdict> {
+export async function analyzeSession(
+  config: BotConfig,
+  session: Session,
+  options: { caseId?: string; intelMatches?: IntelMatch[] } = {},
+): Promise<Verdict> {
   const text = session.inputs
     .filter((input) => input.text)
     .map((input) => input.text)
@@ -17,7 +21,7 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
   const captionText = caseImages.map((img) => img.caption).filter(Boolean).join("\n");
 
   const heuristic = detectHeuristicSignals(text);
-  let signals = heuristic.signals;
+  let signals = mergeSignals(heuristic.signals, intelSignals(options.intelMatches ?? []));
   let balancingSignals = heuristic.balancingSignals;
   let explanation: string | undefined;
   let nextSteps: string[] | undefined;
@@ -55,18 +59,50 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
 
   const score = scoreSignals(signals, balancingSignals.length);
   const riskLevel = riskFromScore(score, signals);
+  const sortedSignals = signals.sort((a, b) => b.weight * b.confidence - a.weight * a.confidence).slice(0, 6);
 
   return {
-    caseId: makeId("case"),
+    caseId: options.caseId ?? makeId("case"),
     riskLevel,
     score,
-    signals: signals.sort((a, b) => b.weight * b.confidence - a.weight * a.confidence).slice(0, 6),
+    signals: sortedSignals,
     balancingSignals,
+    uncertainty: buildUncertainty(riskLevel, score, sortedSignals, balancingSignals, caseImages.length, config.openai.enabled),
     explanation: explanation ?? buildHeuristicExplanation(riskLevel, signals, balancingSignals),
     nextSteps: nextSteps?.length ? nextSteps.slice(0, 4) : defaultNextSteps(riskLevel, signals),
+    doNotDo: defaultDoNotDo(riskLevel),
+    requiresHumanReview: requiresHumanReview(riskLevel, score, sortedSignals, balancingSignals),
     disclaimer: "Signals are not proof. A low score is not a guarantee, and a high score still deserves careful verification.",
     createdAt: nowIso(),
   };
+}
+
+function intelSignals(matches: IntelMatch[]): Signal[] {
+  return matches.map((match) => ({
+    type: `known_${match.entityType}`,
+    label: `Known repeated ${match.entityType.replaceAll("_", " ")}`,
+    evidence: `This ${match.entityType.replaceAll("_", " ")} has appeared in ${match.matchCount} prior case${match.matchCount === 1 ? "" : "s"}.`,
+    confidence: match.confidence,
+    weight: intelWeight(match.entityType),
+    source: "intel",
+  }));
+}
+
+function intelWeight(entityType: IntelMatch["entityType"]): number {
+  switch (entityType) {
+    case "crypto_wallet":
+      return 3.2;
+    case "payment_handle":
+      return 2.8;
+    case "phone_number":
+      return 2.4;
+    case "url":
+      return 2.2;
+    case "email":
+      return 1.8;
+    case "image_reference":
+      return 1.2;
+  }
 }
 
 function mergeSignals(a: Signal[], b: Signal[]): Signal[] {
@@ -127,4 +163,55 @@ function defaultNextSteps(riskLevel: RiskLevel, signals: Signal[]): string[] {
   }
 
   return steps.slice(0, 4);
+}
+
+function defaultDoNotDo(riskLevel: RiskLevel): string[] {
+  const base = [
+    "Do not send money, gift cards, crypto, bank details, identity documents, or verification codes.",
+    "Do not confront them with this result as proof; preserve screenshots and verify calmly.",
+  ];
+
+  if (riskLevel === "low") {
+    return [
+      "Do not treat a low-risk result as a guarantee.",
+      "Do not ignore new money pressure, secrecy, or video-call avoidance if it appears later.",
+    ];
+  }
+
+  return base;
+}
+
+function buildUncertainty(
+  riskLevel: RiskLevel,
+  score: number,
+  signals: Signal[],
+  balancingSignals: string[],
+  imageCount: number,
+  openAiEnabled: boolean,
+): { level: RiskLevel; reasons: string[] } {
+  const reasons: string[] = [];
+  if (signals.length === 0) reasons.push("No strong scam signals were found in the submitted context.");
+  if (balancingSignals.length > 0) reasons.push("Some details also point toward a genuine interaction.");
+  if (imageCount > 0 && !openAiEnabled) reasons.push("Image evidence was received but not vision-analyzed.");
+  if (riskLevel === "medium") reasons.push("The score sits in the middle band and should be treated as a signal check.");
+  if (score > 0 && score < 2.6) reasons.push("The available evidence is limited or relatively weak.");
+
+  if (reasons.length >= 2 || riskLevel === "medium") return { level: "medium", reasons };
+  // "Not much to go on" is medium epistemic uncertainty, not high — never show an
+  // alarming "Uncertainty: high" on an otherwise benign/low case.
+  if (signals.length === 0 || (imageCount > 0 && !openAiEnabled)) return { level: "medium", reasons };
+  return { level: "low", reasons };
+}
+
+function requiresHumanReview(
+  riskLevel: RiskLevel,
+  score: number,
+  signals: Signal[],
+  balancingSignals: string[],
+): boolean {
+  const hasMoney = signals.some((signal) => signal.type === "money_request");
+  // Only a genuine conflict when the case isn't already clearly low-risk — a lone
+  // weak signal plus a balancing note shouldn't demand human review.
+  const hasConflictingContext = riskLevel !== "low" && signals.length > 0 && balancingSignals.length > 0;
+  return (riskLevel === "high" && hasMoney) || score >= 5.2 || hasConflictingContext;
 }
