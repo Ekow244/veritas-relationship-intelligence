@@ -69,6 +69,11 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       createdAt: nowIso(),
     };
     await runtime.data.appendReport(report);
+    if (report.consentedToIntel) {
+      // The user confirmed this case — their detected entities may now help flag
+      // repeat offenders in other users' cases.
+      await runtime.data.markEntitiesConsented(userRef, report.caseId);
+    }
     await runtime.data.appendCaseEvent(buildCaseEvent({
       userRef,
       caseId: report.caseId,

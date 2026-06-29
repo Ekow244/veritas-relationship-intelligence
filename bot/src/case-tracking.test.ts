@@ -24,6 +24,15 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
     ].join(" "),
   });
 
+  // User 1 confirms it was a scam — this consents their detected entities to the
+  // cross-case intel set, so user 2's case below can match them.
+  await processIncomingMessage(runtime, {
+    provider: "simulator",
+    from: "+15550001111",
+    timestamp: Date.now(),
+    text: "SCAM - I blocked them and did not send money.",
+  });
+
   await processIncomingMessage(runtime, {
     provider: "simulator",
     from: "+15550002222",

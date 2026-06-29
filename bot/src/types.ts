@@ -165,6 +165,10 @@ export type DetectedEntity = {
   valuePreview: string;
   source: "regex" | "image_metadata";
   confidence: number;
+  // False at extraction. Flipped to true only when the user later confirms the
+  // case (reports back) — only then may this entity contribute to OTHER users'
+  // cross-case matches. Prevents using non-consenting users' data.
+  consentedToIntel: boolean;
   createdAt: string;
 };
 

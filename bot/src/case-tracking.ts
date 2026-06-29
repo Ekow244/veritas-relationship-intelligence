@@ -99,6 +99,7 @@ export function extractDetectedEntities(input: {
       valuePreview: previewEntity(type, normalized),
       source,
       confidence,
+      consentedToIntel: false,
       createdAt: nowIso(),
     });
   };

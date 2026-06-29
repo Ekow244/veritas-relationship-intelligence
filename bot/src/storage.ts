@@ -39,6 +39,8 @@ export class DataStore {
     for (const record of existing) {
       const candidate = candidates.get(`${record.type}:${record.valueHash}`);
       if (!candidate || candidate.caseId === record.caseId) continue;
+      // Only entities whose owner consented (via report-back) may flag others.
+      if (!record.consentedToIntel) continue;
 
       const key = `${record.type}:${record.valueHash}`;
       const match = matches.get(key) ?? {
@@ -60,6 +62,36 @@ export class DataStore {
       ...match,
       confidence: Math.min(0.95, match.confidence + Math.min(0.15, match.matchCount * 0.03)),
     }));
+  }
+
+  // After a user confirms a case (reports back), mark that case's detected
+  // entities as eligible for cross-case matching. Rewrites the append-only file.
+  async markEntitiesConsented(userRef: string, caseId?: string): Promise<number> {
+    let raw = "";
+    try {
+      raw = await readFile(this.detectedEntitiesPath, "utf8");
+    } catch {
+      return 0;
+    }
+
+    let updated = 0;
+    const lines: string[] = [];
+    for (const line of raw.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const entity = JSON.parse(line) as DetectedEntity;
+        if (entity.userRef === userRef && (caseId === undefined || entity.caseId === caseId) && !entity.consentedToIntel) {
+          entity.consentedToIntel = true;
+          updated += 1;
+        }
+        lines.push(JSON.stringify(entity));
+      } catch {
+        lines.push(line);
+      }
+    }
+
+    await writeFile(this.detectedEntitiesPath, lines.length ? `${lines.join("\n")}\n` : "", "utf8");
+    return updated;
   }
 
   async appendReport(record: StoredReport): Promise<void> {
