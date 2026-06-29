@@ -24,11 +24,21 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
     ].join(" "),
   });
 
+  await processIncomingMessage(runtime, {
+    provider: "simulator",
+    from: "+15550002222",
+    timestamp: Date.now(),
+    text: [
+      "A different profile says his camera is broken and needs me to send money urgently.",
+      "He shared the same +1 (555) 123-4567 number and told me to use example.com/pay.",
+    ].join(" "),
+  });
+
   const cases = await readJsonl<StoredCase>(dataDir, "cases.jsonl");
   const events = await readJsonl<CaseEvent>(dataDir, "case_events.jsonl");
   const entities = await readJsonl<DetectedEntity>(dataDir, "detected_entities.jsonl");
 
-  assert.equal(cases.length, 1, "one verdict should create one stored case");
+  assert.equal(cases.length, 2, "each verdict should create one stored case");
   assert.equal(cases[0].status, "verdict_created");
   assert.equal(cases[0].scamType, "romance");
   assert.equal(cases[0].inputsSummary[0].kind, "chat_text");
@@ -37,6 +47,10 @@ import type { CaseEvent, DetectedEntity, StoredCase } from "./types.js";
   assert.equal(cases[0].verdict?.uncertainty.level, "low", "info-rich high-risk case should have low uncertainty");
   assert.equal(cases[0].verdict?.requiresHumanReview, true, "high-risk money cases should be marked for review");
   assert.ok(cases[0].verdict?.doNotDo.some((item) => /send money/i.test(item)), "verdict should include explicit prohibitions");
+  assert.ok(
+    cases[1].verdict?.signals.some((signal) => signal.source === "intel" && signal.type === "known_phone_number"),
+    "second case should use prior entity matches as intel signals",
+  );
 
   assert.ok(events.some((event) => event.type === "case_started"), "case_started event should be recorded");
   assert.ok(events.some((event) => event.type === "input_received"), "input_received event should be recorded");

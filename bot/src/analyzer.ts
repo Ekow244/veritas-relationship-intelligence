@@ -1,10 +1,14 @@
 import type { BotConfig } from "./config.js";
 import { analyzeWithOpenAI } from "./openai-analyzer.js";
 import { detectHeuristicSignals, scoreSignals } from "./taxonomy.js";
-import type { RiskLevel, Session, Signal, Verdict } from "./types.js";
+import type { IntelMatch, RiskLevel, Session, Signal, Verdict } from "./types.js";
 import { makeId, nowIso } from "./utils.js";
 
-export async function analyzeSession(config: BotConfig, session: Session): Promise<Verdict> {
+export async function analyzeSession(
+  config: BotConfig,
+  session: Session,
+  options: { caseId?: string; intelMatches?: IntelMatch[] } = {},
+): Promise<Verdict> {
   const text = session.inputs
     .filter((input) => input.text)
     .map((input) => input.text)
@@ -17,7 +21,7 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
   const captionText = caseImages.map((img) => img.caption).filter(Boolean).join("\n");
 
   const heuristic = detectHeuristicSignals(text);
-  let signals = heuristic.signals;
+  let signals = mergeSignals(heuristic.signals, intelSignals(options.intelMatches ?? []));
   let balancingSignals = heuristic.balancingSignals;
   let explanation: string | undefined;
   let nextSteps: string[] | undefined;
@@ -58,7 +62,7 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
   const sortedSignals = signals.sort((a, b) => b.weight * b.confidence - a.weight * a.confidence).slice(0, 6);
 
   return {
-    caseId: makeId("case"),
+    caseId: options.caseId ?? makeId("case"),
     riskLevel,
     score,
     signals: sortedSignals,
@@ -72,6 +76,34 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
     disclaimer: "Signals are not proof. A low score is not a guarantee, and a high score still deserves careful verification.",
     createdAt: nowIso(),
   };
+}
+
+function intelSignals(matches: IntelMatch[]): Signal[] {
+  return matches.map((match) => ({
+    type: `known_${match.entityType}`,
+    label: `Known repeated ${match.entityType.replaceAll("_", " ")}`,
+    evidence: `${match.valuePreview} appeared in ${match.matchCount} prior case${match.matchCount === 1 ? "" : "s"}.`,
+    confidence: match.confidence,
+    weight: intelWeight(match.entityType),
+    source: "intel",
+  }));
+}
+
+function intelWeight(entityType: IntelMatch["entityType"]): number {
+  switch (entityType) {
+    case "crypto_wallet":
+      return 3.2;
+    case "payment_handle":
+      return 2.8;
+    case "phone_number":
+      return 2.4;
+    case "url":
+      return 2.2;
+    case "email":
+      return 1.8;
+    case "image_reference":
+      return 1.2;
+  }
 }
 
 function mergeSignals(a: Signal[], b: Signal[]): Signal[] {

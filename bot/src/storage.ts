@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { CaseEvent, DetectedEntity, StoredCase, StoredReport } from "./types.js";
+import type { CaseEvent, DetectedEntity, IntelMatch, StoredCase, StoredReport } from "./types.js";
 
 export class DataStore {
   private readonly casesPath: string;
@@ -29,6 +29,42 @@ export class DataStore {
     }
   }
 
+  async findEntityMatches(records: DetectedEntity[]): Promise<IntelMatch[]> {
+    if (records.length === 0) return [];
+
+    const candidates = new Map(records.map((record) => [`${record.type}:${record.valueHash}`, record]));
+    const matches = new Map<string, IntelMatch>();
+    const existing = await this.readJsonl<DetectedEntity>(this.detectedEntitiesPath);
+
+    for (const record of existing) {
+      const candidate = candidates.get(`${record.type}:${record.valueHash}`);
+      if (!candidate || candidate.caseId === record.caseId) continue;
+
+      const key = `${record.type}:${record.valueHash}`;
+      const match = matches.get(key) ?? {
+        entityType: record.type,
+        valueHash: record.valueHash,
+        valuePreview: candidate.valuePreview,
+        matchCount: 0,
+        previousCaseIds: [],
+        confidence: Math.max(candidate.confidence, record.confidence),
+      };
+
+      match.matchCount += 1;
+      if (!match.previousCaseIds.includes(record.caseId)) {
+        match.previousCaseIds.push(record.caseId);
+      }
+      match.confidence = Math.max(match.confidence, record.confidence);
+      matches.set(key, match);
+    }
+
+    return [...matches.values()].map((match) => ({
+      ...match,
+      previousCaseIds: match.previousCaseIds.slice(0, 5),
+      confidence: Math.min(0.95, match.confidence + Math.min(0.15, match.matchCount * 0.03)),
+    }));
+  }
+
   async appendReport(record: StoredReport): Promise<void> {
     await this.appendJsonl(this.reportsPath, record);
   }
@@ -49,6 +85,26 @@ export class DataStore {
   private async appendJsonl(path: string, record: unknown): Promise<void> {
     await mkdir(dirname(path), { recursive: true });
     await appendFile(path, `${JSON.stringify(record)}\n`, "utf8");
+  }
+
+  private async readJsonl<T>(path: string): Promise<T[]> {
+    let raw = "";
+    try {
+      raw = await readFile(path, "utf8");
+    } catch {
+      return [];
+    }
+
+    const records: T[] = [];
+    for (const line of raw.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        records.push(JSON.parse(line) as T);
+      } catch {
+        // Preserve write-path tolerance: one bad line should not disable intel lookup.
+      }
+    }
+    return records;
   }
 
   private async filterJsonl(path: string, keep: (record: any) => boolean): Promise<number> {
