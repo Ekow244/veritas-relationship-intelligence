@@ -156,6 +156,8 @@ export type StoredReport = {
   caseId?: string;
   userRef: string;
   reportedOutcome: "scam" | "safe" | "unsure";
+  userAction: "blocked" | "stopped_contact" | "sent_money" | "did_not_send" | "reported" | "unknown";
+  avertedHarm: boolean;
   scamIndicators: string[];
   consentedToIntel: boolean;
   createdAt: string;
