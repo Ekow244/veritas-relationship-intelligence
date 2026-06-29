@@ -79,8 +79,15 @@ export type Verdict = {
   score: number;
   signals: Signal[];
   balancingSignals: string[];
+  counterSignals: string[];
+  uncertainty: {
+    level: RiskLevel;
+    reasons: string[];
+  };
   explanation: string;
   nextSteps: string[];
+  doNotDo: string[];
+  requiresHumanReview: boolean;
   disclaimer: string;
   createdAt: string;
 };

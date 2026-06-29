@@ -55,15 +55,20 @@ export async function analyzeSession(config: BotConfig, session: Session): Promi
 
   const score = scoreSignals(signals, balancingSignals.length);
   const riskLevel = riskFromScore(score, signals);
+  const sortedSignals = signals.sort((a, b) => b.weight * b.confidence - a.weight * a.confidence).slice(0, 6);
 
   return {
     caseId: makeId("case"),
     riskLevel,
     score,
-    signals: signals.sort((a, b) => b.weight * b.confidence - a.weight * a.confidence).slice(0, 6),
+    signals: sortedSignals,
     balancingSignals,
+    counterSignals: balancingSignals,
+    uncertainty: buildUncertainty(riskLevel, score, sortedSignals, balancingSignals, caseImages.length, config.openai.enabled),
     explanation: explanation ?? buildHeuristicExplanation(riskLevel, signals, balancingSignals),
     nextSteps: nextSteps?.length ? nextSteps.slice(0, 4) : defaultNextSteps(riskLevel, signals),
+    doNotDo: defaultDoNotDo(riskLevel),
+    requiresHumanReview: requiresHumanReview(riskLevel, score, sortedSignals, balancingSignals),
     disclaimer: "Signals are not proof. A low score is not a guarantee, and a high score still deserves careful verification.",
     createdAt: nowIso(),
   };
@@ -127,4 +132,51 @@ function defaultNextSteps(riskLevel: RiskLevel, signals: Signal[]): string[] {
   }
 
   return steps.slice(0, 4);
+}
+
+function defaultDoNotDo(riskLevel: RiskLevel): string[] {
+  const base = [
+    "Do not send money, gift cards, crypto, bank details, identity documents, or verification codes.",
+    "Do not confront them with this result as proof; preserve screenshots and verify calmly.",
+  ];
+
+  if (riskLevel === "low") {
+    return [
+      "Do not treat a low-risk result as a guarantee.",
+      "Do not ignore new money pressure, secrecy, or video-call avoidance if it appears later.",
+    ];
+  }
+
+  return base;
+}
+
+function buildUncertainty(
+  riskLevel: RiskLevel,
+  score: number,
+  signals: Signal[],
+  balancingSignals: string[],
+  imageCount: number,
+  openAiEnabled: boolean,
+): { level: RiskLevel; reasons: string[] } {
+  const reasons: string[] = [];
+  if (signals.length === 0) reasons.push("No strong scam signals were found in the submitted context.");
+  if (balancingSignals.length > 0) reasons.push("Some details also point toward a genuine interaction.");
+  if (imageCount > 0 && !openAiEnabled) reasons.push("Image evidence was received but not vision-analyzed.");
+  if (riskLevel === "medium") reasons.push("The score sits in the middle band and should be treated as a signal check.");
+  if (score > 0 && score < 2.6) reasons.push("The available evidence is limited or relatively weak.");
+
+  if (reasons.length >= 2 || riskLevel === "medium") return { level: "medium", reasons };
+  if (signals.length === 0 || (imageCount > 0 && !openAiEnabled)) return { level: "high", reasons };
+  return { level: "low", reasons };
+}
+
+function requiresHumanReview(
+  riskLevel: RiskLevel,
+  score: number,
+  signals: Signal[],
+  balancingSignals: string[],
+): boolean {
+  const hasMoney = signals.some((signal) => signal.type === "money_request");
+  const hasConflictingContext = signals.length > 0 && balancingSignals.length > 0;
+  return (riskLevel === "high" && hasMoney) || score >= 5.2 || hasConflictingContext;
 }
