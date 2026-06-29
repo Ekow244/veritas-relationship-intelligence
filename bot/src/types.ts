@@ -1,5 +1,13 @@
 export type RiskLevel = "low" | "medium" | "high";
 
+export type ScamType =
+  | "romance"
+  | "rental"
+  | "investment"
+  | "sextortion"
+  | "impersonation"
+  | "unknown";
+
 export type InputKind =
   | "greeting"
   | "chat_text"
@@ -36,6 +44,13 @@ export type SessionInput = {
   image?: ImageRef;
   images?: ImageRef[];
   receivedAt: number;
+};
+
+export type CaseInputSummary = {
+  kind: InputKind;
+  receivedAt: string;
+  textLength: number;
+  imageCount: number;
 };
 
 export type Session = {
@@ -75,10 +90,49 @@ export type StoredCase = {
   createdAt: string;
   channel: "whatsapp" | "simulator";
   userRef: string;
-  inputsSummary: string[];
-  status: "verdict_created" | "partial" | "deleted";
+  scamType: ScamType;
+  inputsSummary: CaseInputSummary[];
+  status: "created" | "verdict_created" | "partial" | "deleted";
   ttlExpiresAt: string;
+  modelVersion?: string;
+  promptVersion?: string;
   verdict?: Omit<Verdict, "caseId">;
+};
+
+export type CaseEventType =
+  | "case_started"
+  | "input_received"
+  | "verdict_created"
+  | "report_received"
+  | "delete_requested";
+
+export type CaseEvent = {
+  id: string;
+  caseId?: string;
+  userRef: string;
+  type: CaseEventType;
+  createdAt: string;
+  metadata: Record<string, string | number | boolean | string[] | undefined>;
+};
+
+export type DetectedEntityType =
+  | "phone_number"
+  | "url"
+  | "email"
+  | "payment_handle"
+  | "crypto_wallet"
+  | "image_reference";
+
+export type DetectedEntity = {
+  id: string;
+  caseId: string;
+  userRef: string;
+  type: DetectedEntityType;
+  valueHash: string;
+  valuePreview: string;
+  source: "regex" | "image_metadata";
+  confidence: number;
+  createdAt: string;
 };
 
 export type StoredReport = {

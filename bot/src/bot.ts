@@ -1,5 +1,6 @@
 import type { BotConfig } from "./config.js";
 import { analyzeSession } from "./analyzer.js";
+import { buildCaseEvent, buildStoredCase, extractDetectedEntities } from "./case-tracking.js";
 import { classifyMessage } from "./classifier.js";
 import { detectHeuristicSignals } from "./taxonomy.js";
 import {
@@ -19,7 +20,7 @@ import {
   reportThanksMessage,
   scopeRefusalMessage,
 } from "./formatter.js";
-import type { BotMessage, InputKind, Session, SessionInput, StoredCase, StoredReport } from "./types.js";
+import type { BotMessage, InputKind, Session, SessionInput, StoredReport } from "./types.js";
 import type { DataStore } from "./storage.js";
 import type { SessionStore } from "./session-store.js";
 import { hashUser, makeId, nowIso } from "./utils.js";
@@ -62,6 +63,15 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       createdAt: nowIso(),
     };
     await runtime.data.appendReport(report);
+    await runtime.data.appendCaseEvent(buildCaseEvent({
+      userRef,
+      caseId: report.caseId,
+      type: "report_received",
+      metadata: {
+        reportedOutcome: report.reportedOutcome,
+        consentedToIntel: report.consentedToIntel,
+      },
+    }));
     return [reportThanksMessage(outcome)];
   }
 
@@ -84,7 +94,27 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   } else {
     // new primary submission (or first message) = fresh case
     updated = runtime.sessions.startCase(userRef, input);
+    await runtime.data.appendCaseEvent(buildCaseEvent({
+      userRef,
+      type: "case_started",
+      metadata: {
+        provider: message.provider,
+        inputKind: input.kind,
+        hasImage,
+      },
+    }));
   }
+
+  await runtime.data.appendCaseEvent(buildCaseEvent({
+    userRef,
+    type: "input_received",
+    metadata: {
+      provider: message.provider,
+      inputKind: input.kind,
+      textLength: input.text?.length ?? 0,
+      imageCount: input.images?.length ?? (input.image ? 1 : 0),
+    },
+  }));
 
   const inboundImages = message.images ?? (message.image ? [message.image] : []);
   const anyImageHydrated = inboundImages.some((img) => img.dataUrl);
@@ -125,26 +155,34 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   const verdict = await analyzeSession(runtime.config, updated);
   runtime.sessions.setVerdict(userRef, verdict);
 
-  const storedCase: StoredCase = {
-    id: verdict.caseId,
-    createdAt: verdict.createdAt,
-    channel: message.provider === "simulator" ? "simulator" : "whatsapp",
+  const storedCase = buildStoredCase({
+    verdict,
+    session: updated,
+    message,
     userRef,
-    inputsSummary: updated.inputs.map((item) => item.kind),
-    status: "verdict_created",
-    ttlExpiresAt: new Date(Date.now() + runtime.config.sessionTtlMs).toISOString(),
-    verdict: {
+    ttlMs: runtime.config.sessionTtlMs,
+    modelVersion: runtime.config.openai.enabled ? runtime.config.openai.model : "heuristic",
+  });
+  const detectedEntities = extractDetectedEntities({
+    caseId: verdict.caseId,
+    userRef,
+    session: updated,
+    salt: runtime.config.userHashSalt,
+  });
+
+  await runtime.data.appendCase(storedCase);
+  await runtime.data.appendDetectedEntities(detectedEntities);
+  await runtime.data.appendCaseEvent(buildCaseEvent({
+    userRef,
+    caseId: verdict.caseId,
+    type: "verdict_created",
+    metadata: {
       riskLevel: verdict.riskLevel,
       score: verdict.score,
-      signals: verdict.signals,
-      balancingSignals: verdict.balancingSignals,
-      explanation: verdict.explanation,
-      nextSteps: verdict.nextSteps,
-      disclaimer: verdict.disclaimer,
-      createdAt: verdict.createdAt,
+      signalTypes: verdict.signals.map((signal) => signal.type),
+      entityCount: detectedEntities.length,
     },
-  };
-  await runtime.data.appendCase(storedCase);
+  }));
   runtime.sessions.setStage(userRef, "verdict_done");
 
   const replies = [formatVerdict(verdict)];

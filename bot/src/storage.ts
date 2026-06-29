@@ -1,13 +1,17 @@
 import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { StoredCase, StoredReport } from "./types.js";
+import type { CaseEvent, DetectedEntity, StoredCase, StoredReport } from "./types.js";
 
 export class DataStore {
   private readonly casesPath: string;
+  private readonly caseEventsPath: string;
+  private readonly detectedEntitiesPath: string;
   private readonly reportsPath: string;
 
   constructor(private readonly dataDir: string) {
     this.casesPath = join(dataDir, "cases.jsonl");
+    this.caseEventsPath = join(dataDir, "case_events.jsonl");
+    this.detectedEntitiesPath = join(dataDir, "detected_entities.jsonl");
     this.reportsPath = join(dataDir, "reports.jsonl");
   }
 
@@ -15,14 +19,31 @@ export class DataStore {
     await this.appendJsonl(this.casesPath, record);
   }
 
+  async appendCaseEvent(record: CaseEvent): Promise<void> {
+    await this.appendJsonl(this.caseEventsPath, record);
+  }
+
+  async appendDetectedEntities(records: DetectedEntity[]): Promise<void> {
+    for (const record of records) {
+      await this.appendJsonl(this.detectedEntitiesPath, record);
+    }
+  }
+
   async appendReport(record: StoredReport): Promise<void> {
     await this.appendJsonl(this.reportsPath, record);
   }
 
-  async deleteUserData(userRef: string): Promise<{ casesRemoved: number; reportsRemoved: number }> {
+  async deleteUserData(userRef: string): Promise<{
+    casesRemoved: number;
+    caseEventsRemoved: number;
+    detectedEntitiesRemoved: number;
+    reportsRemoved: number;
+  }> {
     const casesRemoved = await this.filterJsonl(this.casesPath, (record) => record.userRef !== userRef);
+    const caseEventsRemoved = await this.filterJsonl(this.caseEventsPath, (record) => record.userRef !== userRef);
+    const detectedEntitiesRemoved = await this.filterJsonl(this.detectedEntitiesPath, (record) => record.userRef !== userRef);
     const reportsRemoved = await this.filterJsonl(this.reportsPath, (record) => record.userRef !== userRef);
-    return { casesRemoved, reportsRemoved };
+    return { casesRemoved, caseEventsRemoved, detectedEntitiesRemoved, reportsRemoved };
   }
 
   private async appendJsonl(path: string, record: unknown): Promise<void> {
