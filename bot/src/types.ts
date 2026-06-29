@@ -70,7 +70,16 @@ export type Signal = {
   evidence: string;
   confidence: number;
   weight: number;
-  source: "heuristic" | "llm" | "image_api" | "user_report";
+  source: "heuristic" | "llm" | "image_api" | "user_report" | "intel";
+};
+
+export type IntelMatch = {
+  entityType: DetectedEntityType;
+  valueHash: string;
+  valuePreview: string;
+  matchCount: number;
+  previousCaseIds: string[];
+  confidence: number;
 };
 
 export type Verdict = {

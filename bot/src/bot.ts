@@ -152,7 +152,15 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     return [askForMoreMessage()];
   }
 
-  const verdict = await analyzeSession(runtime.config, updated);
+  const caseId = makeId("case");
+  const detectedEntities = extractDetectedEntities({
+    caseId,
+    userRef,
+    session: updated,
+    salt: runtime.config.userHashSalt,
+  });
+  const intelMatches = await runtime.data.findEntityMatches(detectedEntities);
+  const verdict = await analyzeSession(runtime.config, updated, { caseId, intelMatches });
   runtime.sessions.setVerdict(userRef, verdict);
 
   const storedCase = buildStoredCase({
@@ -162,12 +170,6 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
     userRef,
     ttlMs: runtime.config.sessionTtlMs,
     modelVersion: runtime.config.openai.enabled ? runtime.config.openai.model : "heuristic",
-  });
-  const detectedEntities = extractDetectedEntities({
-    caseId: verdict.caseId,
-    userRef,
-    session: updated,
-    salt: runtime.config.userHashSalt,
   });
 
   await runtime.data.appendCase(storedCase);
@@ -183,6 +185,7 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
       requiresHumanReview: verdict.requiresHumanReview,
       signalTypes: verdict.signals.map((signal) => signal.type),
       entityCount: detectedEntities.length,
+      intelMatchCount: intelMatches.length,
     },
   }));
   runtime.sessions.setStage(userRef, "verdict_done");
