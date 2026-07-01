@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import type {
   BotMessage,
   CaseEvent,
@@ -171,7 +171,9 @@ function normalizeEntityValue(type: DetectedEntityType, value: string): string {
 }
 
 function hashEntity(value: string, salt: string): string {
-  return createHash("sha256").update(`${salt}:entity:${value}`).digest("hex");
+  // Keyed HMAC (not a plain hash): predictable identifiers like phone numbers and
+  // emails are otherwise trivially recoverable from a plain SHA via dictionary attack.
+  return createHmac("sha256", salt).update(`entity:${value}`).digest("hex");
 }
 
 function previewEntity(type: DetectedEntityType, value: string): string {

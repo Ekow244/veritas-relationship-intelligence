@@ -9,7 +9,7 @@
     "bot:build": "tsc -p bot/tsconfig.json",
     "bot:start": "node bot/dist/index.js",
     "bot:eval": "npm run bot:build && node bot/dist/evaluation.test.js",
-    "bot:test": "npm run bot:build && node bot/dist/config.test.js && node bot/dist/twilio.test.js && node bot/dist/openai-analyzer.test.js && node bot/dist/taxonomy.test.js && node bot/dist/clarify.test.js && node bot/dist/case-tracking.test.js && node bot/dist/outcome-feedback.test.js && node bot/dist/evaluation.test.js && node bot/dist/guardrails.test.js && node bot/dist/smoke-test.js"
+    "bot:test": "npm run bot:build && node bot/dist/config.test.js && node bot/dist/twilio.test.js && node bot/dist/openai-analyzer.test.js && node bot/dist/idempotency.test.js && node bot/dist/taxonomy.test.js && node bot/dist/clarify.test.js && node bot/dist/case-tracking.test.js && node bot/dist/outcome-feedback.test.js && node bot/dist/evaluation.test.js && node bot/dist/guardrails.test.js && node bot/dist/smoke-test.js"
   },
   "dependencies": {
     "lucide-react": "latest",

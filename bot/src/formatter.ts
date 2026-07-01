@@ -19,7 +19,7 @@ export function greetingMessage(): string {
     "",
     "It helps to mention if they’ve asked for money, dodged a video call, or pushed to chat off the dating app.",
     "",
-    "🔒 I don’t keep your chats or photos. Reply DELETE anytime to wipe your data.",
+    "🔒 I minimize what I collect and auto-delete your submission from my systems on a short schedule (service providers may retain limited data per their own policies). Reply DELETE anytime to wipe your data.",
   ].join("\n");
 }
 
