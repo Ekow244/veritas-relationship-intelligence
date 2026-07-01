@@ -65,6 +65,9 @@ export async function analyzeWithOpenAI(
     },
     body: JSON.stringify({
       model: config.openai.model,
+      // Don't let OpenAI retain response state (the Responses API stores for ~30
+      // days by default). Keeps our provider chain consistent with the privacy claim.
+      store: false,
       instructions: systemPrompt,
       input: [
         {

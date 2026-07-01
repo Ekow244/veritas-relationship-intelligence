@@ -8,6 +8,8 @@ import {
   analyzingMessage,
   askForMoreMessage,
   clarifyQuestion,
+  consentGrantedMessage,
+  consentMessage,
   crisisMessage,
   deleteConfirmationMessage,
   followUpMessage,
@@ -39,6 +41,17 @@ export async function processIncomingMessage(runtime: BotRuntime, message: BotMe
   const userRef = hashUser(message.from, runtime.config.userHashSalt);
   const kind = classifyMessage(message);
   const session = runtime.sessions.get(userRef);
+
+  // Consent gate (production): require an affirmative AGREE before any analysis.
+  // DELETE (a data right) and crisis (safety) always pass through.
+  if (runtime.config.requireConsent && !session.consented && kind !== "delete_request" && kind !== "crisis") {
+    if (/^\s*(i\s+)?agree\b/i.test(message.text ?? "")) {
+      runtime.sessions.markConsented(userRef);
+      runtime.sessions.markGreeted(userRef);
+      return [consentGrantedMessage()];
+    }
+    return [consentMessage()];
+  }
 
   if (!session.greeted && kind === "greeting") {
     runtime.sessions.markGreeted(userRef);

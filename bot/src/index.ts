@@ -6,6 +6,7 @@ import { SessionStore } from "./session-store.js";
 import { DataStore } from "./storage.js";
 import { hydrateTwilioImages, parseTwilioMessage, planTwilioResponse, sendTwilioWhatsApp, twimlMessage } from "./twilio.js";
 import { classifyMessage } from "./classifier.js";
+import { IdempotencyStore } from "./idempotency.js";
 import { analyzingMessage, overloadedMessage } from "./formatter.js";
 import { hydrateMetaImage, parseMetaWebhook, sendWhatsAppText } from "./whatsapp-cloud.js";
 import { GuardrailStore } from "./guardrails.js";
@@ -26,6 +27,7 @@ const runtime = {
   data: new DataStore(config.dataDir),
   guardrails: new GuardrailStore(config.guardrails),
 };
+const idempotency = new IdempotencyStore();
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
@@ -68,6 +70,7 @@ const server = createServer(async (req, res) => {
       textResponse(res, 200, "ok");
 
       void Promise.all(messages.map(async (message) => {
+        if (message.id && idempotency.seen(message.id)) return; // skip retried deliveries
         const hydrated = await hydrateMetaImage(config, message);
         await processMetaMessageForWhatsApp(runtime, hydrated, (to, body) => sendWhatsAppText(config, to, body));
       })).catch((error) => {
@@ -91,6 +94,10 @@ const server = createServer(async (req, res) => {
       }
 
       const message = parseTwilioMessage(params);
+      // Duplicate delivery (Twilio retry) → 200 with empty TwiML, no re-analysis/re-reply.
+      if (message.id && idempotency.seen(message.id)) {
+        return textResponse(res, 200, twimlMessage(""), "text/xml; charset=utf-8");
+      }
       const canAsync = Boolean(config.twilio.accountSid && config.twilio.authToken);
       const plan = planTwilioResponse(params, classifyMessage(message), canAsync);
 

@@ -58,6 +58,7 @@ export type Session = {
   startedAt: number;
   updatedAt: number;
   greeted: boolean;
+  consented?: boolean;
   clarifierAsked?: boolean;
   stage?: "awaiting_screening" | "verdict_done";
   currentCaseId?: string;
