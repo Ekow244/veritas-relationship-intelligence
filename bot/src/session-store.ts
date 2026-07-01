@@ -39,6 +39,12 @@ export class SessionStore {
     session.updatedAt = Date.now();
   }
 
+  markConsented(userRef: string): void {
+    const session = this.get(userRef);
+    session.consented = true;
+    session.updatedAt = Date.now();
+  }
+
   markClarifierAsked(userRef: string): void {
     const session = this.get(userRef);
     session.clarifierAsked = true;

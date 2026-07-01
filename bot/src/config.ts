@@ -5,6 +5,7 @@ export type BotConfig = {
   sessionTtlMs: number;
   dataDir: string;
   userHashSalt: string;
+  requireConsent: boolean;
   guardrails: {
     perUserDailyLimit: number;
     globalDailyCheckLimit: number;
@@ -52,6 +53,9 @@ export function getConfig(): BotConfig {
     sessionTtlMs: ttlMinutes * 60 * 1000,
     dataDir: env("DATA_DIR") ?? "./bot/data",
     userHashSalt: env("USER_HASH_SALT") ?? "dev-only-change-me",
+    // Off by default (keeps the simulator/test flow simple); set REQUIRE_CONSENT=true
+    // in production so users must affirmatively AGREE before any analysis.
+    requireConsent: env("REQUIRE_CONSENT") === "true",
     guardrails: {
       perUserDailyLimit: envInt("PER_USER_DAILY_CHECK_LIMIT", 25),
       globalDailyCheckLimit: envInt("GLOBAL_DAILY_CHECK_LIMIT", 500),

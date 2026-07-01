@@ -27,6 +27,22 @@ export function analyzingMessage(): string {
   return "🔎 Got it — taking a look now…";
 }
 
+export function consentMessage(): string {
+  return [
+    "👋 I’m Veritas. I flag romance-scam risk signals in a chat or profile you share — I identify *risk indicators*, I can’t prove intent or guarantee anyone is genuine.",
+    "",
+    "Before you send anything, please remove intimate images, passwords, banking details, and ID numbers. You must be 18+.",
+    "",
+    "I minimize what I collect and auto-delete your submission on a short schedule (my service providers may retain limited data per their own policies). Reply DELETE anytime to wipe your data.",
+    "",
+    "Reply AGREE to continue.",
+  ].join("\n");
+}
+
+export function consentGrantedMessage(): string {
+  return "Thanks. Send the chat text, a screenshot, or a profile photo and I’ll check it for scam warning signs.";
+}
+
 export function clarifyQuestion(missing: "money" | "video" | "offplatform"): string {
   switch (missing) {
     case "money":
